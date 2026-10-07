@@ -118,6 +118,9 @@
   .thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
   .card:hover .thumb img { transform: scale(1.06); }
   .thumb.icon { display: grid; place-items: center; font-size: 56px; color: var(--blue); background: radial-gradient(circle at 30% 30%, rgba(79,195,255,.22), transparent 60%), radial-gradient(circle at 75% 75%, rgba(214,59,176,.22), transparent 60%), var(--bg-2); }
+  .g-thumb { background: radial-gradient(circle at 50% 45%, rgba(230,40,50,.28), transparent 62%), var(--bg-2); }
+  .big-g { font-family: "Inter", Arial, sans-serif; font-weight: 800; font-size: 110px; line-height: 1; color: #e3262f; text-shadow: 0 0 28px rgba(227,38,47,.55); transition: transform .3s; }
+  .card:hover .big-g { transform: scale(1.08); }
   .badge { position: absolute; z-index: 2; top: 12px; left: 12px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; background: var(--pink); color: #fff; }
   .badge.live { background: #3ddc84; color: #022; }
   .badge.wip { background: #ffb020; color: #2a1800; }
@@ -247,7 +250,7 @@
   <div class="sec-head reveal"><div class="num">01.</div><h2>Sobre mí</h2>
     <p>Me gusta construir soluciones eficientes y aprender nuevas tecnologías. Trabajo tanto en backend y bases de datos como en interfaces web y móviles, y tengo conocimientos en testing y seguridad.</p></div>
   <div class="stats">
-    <div class="stat reveal"><b>9+</b><span>Proyectos realizados</span></div>
+    <div class="stat reveal"><b>10+</b><span>Proyectos realizados</span></div>
     <div class="stat reveal"><b>8,44</b><span>Promedio de egreso</span></div>
     <div class="stat reveal"><b>20+</b><span>Tecnologías</span></div>
     <div class="stat reveal"><b>2</b><span>Apps desplegadas en la nube</span></div>
@@ -327,11 +330,11 @@
     </div>
 
     <div class="card reveal" data-c="web db">
-      <div class="thumb"><img src="https://cristiansabella.github.io/SabellaCristian/img/genexus1.jpg" alt="Sistema web híbrido en GeneXus"></div>
+      <div class="thumb"><img src="https://cristiansabella.github.io/SabellaCristian/img/genexus1.jpg" alt="Sistema de gestión Maquinarias Miguel en GeneXus"></div>
       <div class="card-body">
-        <h3>Sistema Web Híbrido</h3>
-        <p>Sistema administrativo desarrollado con GeneXus y SQL Server, con transacciones, reglas, eventos, procedimientos y validaciones.</p>
-        <div class="tech"><span>GeneXus</span><span>SQL Server</span></div>
+        <h3>Sistema de Gestión — Maquinarias Miguel</h3>
+        <p>Sistema web en GeneXus y SQL Server para gestionar clientes, reparaciones, proveedores, repuestos, pagos, marcas, stock, listados y notificaciones, con transacciones, reglas, eventos, procedimientos y validaciones complejas.</p>
+        <div class="tech"><span>GeneXus 17/18</span><span>SQL Server</span></div>
         <div class="links"><a href="https://github.com/CristianSabella/M-quinas-de-cocer-en-Genexus" target="_blank"><i class="fab fa-github"></i> Repositorio</a></div>
       </div>
     </div>
@@ -362,6 +365,16 @@
         <p>Aplicación de consola con consulta de saldo, depósitos, retiros con validaciones y registro de movimientos.</p>
         <div class="tech"><span>C#</span></div>
         <div class="links"><a href="https://github.com/CristianSabella/Cajero-Autom-tico-simple-" target="_blank"><i class="fab fa-github"></i> Repositorio</a></div>
+      </div>
+    </div>
+
+    <div class="card reveal" data-c="web db">
+      <div class="thumb icon g-thumb"><span class="big-g">G</span></div>
+      <div class="card-body">
+        <h3>Sistema de gestión GeneXus</h3>
+        <p>Gestión de alumnos, asignaturas y calificaciones desarrollada en GeneXus, usando transacciones, atributos, reglas y work panels.</p>
+        <div class="tech"><span>GeneXus</span></div>
+        <div class="links"><a href="https://github.com/CristianSabella/M-quinas-de-cocer-en-Genexus" target="_blank"><i class="fab fa-github"></i> Repositorio</a></div>
       </div>
     </div>
 
