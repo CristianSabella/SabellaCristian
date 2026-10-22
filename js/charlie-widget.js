@@ -71,7 +71,7 @@
       background:var(--charlie-color);color:#fff;border:none;cursor:pointer;font-size:28px;line-height:1;display:flex;align-items:center;justify-content:center;
       box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:99999;transition:transform .2s;padding:0}
     #charlie-burbuja:hover{transform:scale(1.08)}
-    #charlie-ventana{position:fixed;right:${DERECHA}px;bottom:${ABAJO + 72}px;width:360px;max-width:calc(100vw - 32px);
+    #charlie-ventana{position:fixed;right:${DERECHA}px;bottom:${ABAJO + 72}px;width:360px;max-width:calc(100vw - ${DERECHA + 12}px);
       height:520px;max-height:calc(100vh - ${ABAJO + 100}px);background:var(--charlie-fondo);border-radius:14px;
       box-shadow:0 8px 30px rgba(0,0,0,.45);display:none;flex-direction:column;overflow:hidden;z-index:99999;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;text-align:left;box-sizing:border-box;line-height:1.45}
