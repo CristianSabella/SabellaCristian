@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cristian Sabella | Desarrollador de Software</title>
-<meta name="description" content="Portfolio de Cristian Sabella, Técnico Superior en Desarrollo de Software. C#, .NET, Flutter, SQL Server, PostgreSQL, GeneXus.">
+<meta name="description" content="Portfolio de Cristian Sabella, Desarrollador de IGNIA y Técnico Superior en Desarrollo de Software. C#, .NET, Flutter, SQL Server, PostgreSQL, GeneXus.">
 <!-- Vista previa al compartir el link (LinkedIn, WhatsApp, etc.) -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Cristian Sabella | Desarrollador de Software">
@@ -60,6 +60,9 @@
   .role .cursor { display: inline-block; width: 9px; background: var(--blue); animation: blink 1s infinite; margin-left: 2px; }
   @keyframes blink { 50% { opacity: 0; } }
   .hero p.intro { color: var(--muted); font-size: 17px; max-width: 560px; }
+  .ignia-tag { display: inline-flex; align-items: center; gap: 12px; margin: 0 0 18px; padding: 8px 16px 8px 12px; border-radius: 12px; background: rgba(110, 22, 22, 0.55); border: 1px solid rgba(250, 242, 240, 0.22); color: #faf2f0; font-weight: 600; font-size: 15px; }
+  .ignia-tag img { height: 22px; width: auto; display: block; }
+  .ignia-tag .sep { width: 1px; height: 20px; background: rgba(250, 242, 240, 0.35); }
   .hero-btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
   .b { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 10px; font-weight: 700; font-size: 15px; transition: .2s; }
   .b-main { background: var(--blue); color: #021022; }
@@ -224,6 +227,7 @@
       <div class="tag"><span class="dot"></span> Disponible para trabajar · Rosario / Remoto</div>
       <h1>Hola, soy <span>Cristian Sabella</span></h1>
       <div class="role"><span id="typed"></span><span class="cursor">&nbsp;</span></div>
+      <div class="ignia-tag"><img src="img/ignia-logo-claro.png" alt="IGNIA"><span class="sep"></span><span>Desarrollador de IGNIA</span></div>
       <p class="intro">Técnico Superior en Desarrollo de Software y estudiante avanzado de la Licenciatura en Gestión de la Tecnología Informática (UAI). Desarrollo aplicaciones, APIs y sistemas de gestión con bases de datos relacionales.</p>
       <div class="hero-btns">
         <a href="#proyectos" class="b b-main"><i class="fas fa-code"></i> Ver proyectos</a>
@@ -335,6 +339,21 @@
       </div>
     </div>
 
+    <div class="card featured reveal" data-c="web">
+      <div class="thumb"><span class="badge wip">En proceso<span class="dots"><i>.</i><i>.</i><i>.</i></span></span><img src="img/charlie.jpg" alt="Charlie, el chatbot de IGNIA, respondiendo en una página web" loading="lazy"></div>
+      <div class="card-body">
+        <h3>Charlie — Chatbot multicanal de IGNIA <span class="wip-text">(en proceso<span class="dots"><i>.</i><i>.</i><i>.</i></span>)</span></h3>
+        <p>Asistente virtual de IGNIA que atiende a los clientes, muestra los servicios y arma pedidos de cotización. Un solo "cerebro" sirve para la web, WhatsApp y apps.</p>
+        <ul>
+          <li>Motor de conversaciones propio: los flujos se editan en JSON, sin tocar código.</li>
+          <li>Entiende botones, números o texto libre, y tiene "volver al menú anterior" en cada paso.</li>
+          <li>Burbuja de chat que se agrega a cualquier web con una sola línea.</li>
+          <li>API REST en Node.js / Express, lista para sumar WhatsApp Cloud API.</li>
+        </ul>
+        <div class="tech"><span>Node.js</span><span>Express</span><span>JavaScript</span><span>API REST</span><span>JSON</span></div>
+      </div>
+    </div>
+
     <div class="card reveal" data-c="desk db">
       <div class="thumb"><img src="https://cristiansabella.github.io/SabellaCristian/img/equipo.jpg" alt="Sistema de comunicación servidor/cliente"></div>
       <div class="card-body">
@@ -437,7 +456,7 @@
 <section id="contacto">
   <div class="sec-head reveal"><div class="num">05.</div><h2>Contacto</h2><p>¿Tenés una propuesta o querés charlar? Escribime por donde te quede más cómodo.</p></div>
   <div class="contact">
-    <div class="c-item reveal"><i class="fas fa-envelope"></i><b>Email</b><a href="mailto:cristiansabella57@gmail.com"><span>cristiansabella57@gmail.com</span></a><br><a href="mailto:cristian-m.sabella@gmail.com"><span>cristian-m.sabella@gmail.com</span></a></div>
+    <div class="c-item reveal"><i class="fas fa-envelope"></i><b>Email</b><a href="mailto:cristiansabella57@gmail.com"><span>cristiansabella57@gmail.com</span></a><br><a href="mailto:cristian-m.sabella@hotmail.com"><span>cristian-m.sabella@hotmail.com</span></a></div>
     <a class="c-item reveal" href="https://www.linkedin.com/in/cristian-sabella-a872182b6/" target="_blank"><i class="fab fa-linkedin"></i><b>LinkedIn</b><span>Cristian Sabella</span></a>
     <a class="c-item reveal" href="https://github.com/CristianSabella" target="_blank"><i class="fab fa-github"></i><b>GitHub</b><span>CristianSabella</span></a>
     <a class="c-item reveal" href="https://wa.me/5493413124748" target="_blank"><i class="fab fa-whatsapp"></i><b>WhatsApp</b><span>+54 9 341 312 4748</span></a>
@@ -485,7 +504,7 @@
   document.getElementById('year').textContent = new Date().getFullYear();
 
   // Texto que se escribe solo
-  const roles = ['Desarrollador de Software', 'C# · .NET · ASP.NET Core', 'Flutter · Apps multiplataforma', 'SQL Server · PostgreSQL', 'GeneXus · Sistemas de gestión'];
+  const roles = ['Desarrollador de IGNIA', 'Desarrollador de Software','C# · .NET · ASP.NET Core', 'Flutter · Apps multiplataforma', 'SQL Server · PostgreSQL', 'GeneXus · Sistemas de gestión'];
   const typed = document.getElementById('typed');
   let ri = 0, ci = 0, del = false;
   function type() {
