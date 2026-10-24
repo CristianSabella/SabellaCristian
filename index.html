@@ -355,6 +355,22 @@
     </div>
 
     <div class="card featured reveal" data-c="web">
+      <div class="thumb"><span class="badge live">Nuevo</span><img src="img/charlie-bordo.jpg" alt="Charlie Bordó: chat claro con botones bordó" loading="lazy"></div>
+      <div class="card-body">
+        <h3>Charlie Bordó — Nueva interfaz</h3>
+        <p>Otra versión de Charlie con una interfaz más elegante: el mismo cerebro y los mismos flujos, con un chat rediseñado en bordó, letras serif y una experiencia más cuidada.</p>
+        <ul>
+          <li>Tipografía elegante (Cormorant Garamond + Jost) y paleta en bordó.</li>
+          <li>La opción elegida queda marcada en la charla y las demás se atenúan.</li>
+          <li>Indicador de "escribiendo", animaciones suaves y versión para celular.</li>
+          <li>Convive con el Charlie original en la misma página sin pisarse.</li>
+        </ul>
+        <div class="tech"><span>JavaScript</span><span>CSS</span><span>Node.js</span><span>Cloudflare Workers</span><span>Diseño UI</span></div>
+        <div class="links"><a href="#" onclick="var b=document.getElementById('cig-burbuja'); if(b){b.click();} return false;"><i class="fas fa-comments"></i> Probalo acá</a><a href="https://charlie-ignia.cristiansabella57.workers.dev/demo" target="_blank" rel="noopener"><i class="fas fa-up-right-from-square"></i> Ver demo</a></div>
+      </div>
+    </div>
+
+    <div class="card featured reveal" data-c="web">
       <div class="thumb"><span class="badge live">En línea</span><img src="img/charlie.jpg" alt="Charlie, el chatbot de Cristian Sabella, respondiendo en una página web" loading="lazy"></div>
       <div class="card-body">
         <h3>Charlie — Chatbot multicanal</h3>
@@ -492,6 +508,9 @@
 
 <!-- Charlie: chatbot (Cloudflare Workers). Va arriba del botón de WhatsApp -->
 <script src="js/charlie-widget.js" data-servidor="https://charlie-bot.cristiansabella57.workers.dev" data-abajo="96" data-derecha="24" defer></script>
+
+<!-- Charlie Bordó (nueva interfaz). Va arriba de la burbuja de Charlie -->
+<script src="https://charlie-ignia.cristiansabella57.workers.dev/widget.js" data-abajo="172" data-derecha="24" defer></script>
 
 
 <script>
