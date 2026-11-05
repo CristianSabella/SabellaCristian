@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img">
+<title>Recortes - collage</title>
+<rect width="400" height="300" fill="#e9dfc9"/>
+<path d="M20,24 L190,18 L196,150 L26,158 Z" fill="#c9d6c2"/>
+<path d="M30,40 L180,36 M32,60 L176,56 M34,80 L182,76 M36,100 L178,96 M38,120 L180,116" stroke="#8a9a85" stroke-width="2"/>
+<path d="M210,30 L370,22 L380,170 L232,180 Z" fill="#b8432f"/>
+<circle cx="300" cy="100" r="44" fill="#f2c14e"/>
+<path d="M256,100 A44,44 0 0 1 344,100 Z" fill="#e8a33a"/>
+<path d="M40,170 L220,160 L214,276 L48,284 Z" fill="#2f5d73"/>
+<path d="M60,190 L120,186 L118,240 L62,244 Z" fill="#f3ede2"/>
+<path d="M134,184 L196,182 L192,252 L132,254 Z" fill="#f3ede2"/>
+<path d="M66,200 L112,198 M66,212 L110,210 M66,224 L104,222 M140,196 L186,194 M140,208 L182,206 M140,220 L188,218 M140,232 L176,231" stroke="#777" stroke-width="2"/>
+<path d="M236,196 L384,188 L376,282 L244,276 Z" fill="#d9cfb7"/>
+<path d="M250,210 L360,206 L330,262 Z" fill="#1d1d1d"/>
+<path d="M300,200 C320,230 340,240 370,250" stroke="#b8432f" stroke-width="6" fill="none"/>
+<path d="M190,18 L200,26 L194,40 L204,54 L196,68" stroke="#e9dfc9" stroke-width="4" fill="none"/>
+<path d="M210,160 C250,150 270,170 300,160" stroke="#7a6a4f" stroke-width="3" stroke-dasharray="6 5" fill="none"/>
+<rect x="176" y="140" width="52" height="16" fill="#f6efd9" opacity="0.85" transform="rotate(-8 202 148)"/>
+<rect x="352" y="160" width="44" height="14" fill="#f6efd9" opacity="0.85" transform="rotate(12 374 167)"/>
+</svg>

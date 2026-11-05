@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atelier Norte - Exposición</title>
+  <link rel="icon" href="img/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Poppins:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body id="arriba">
+
+  <header>
+    <div class="contenedor barra">
+      <div class="logo"><a href="index.html">Atelier Norte</a></div>
+      <nav>
+        <ul>
+          <li><a href="index.html">Inicio</a></li>
+          <li><a href="artistas.html">Artistas</a></li>
+          <li><a href="exposicion.html" class="actual">Exposición</a></li>
+          <li><a href="visita.html">Visita</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="contenedor">
+
+    <!-- texto de la exposicion -->
+    <section>
+      <h1 class="titulo">Materias visibles</h1>
+      <p>Muestra colectiva de marzo a junio. Materias visibles reúne pintura, cerámica, fotografía y collage de cuatro artistas de la ciudad.</p>
+      <p>Cada obra muestra un material distinto y la forma en que cada artista lo trabaja: óleo y acrílico de Renata Salas, cerámica esmaltada de Tomás Vega, fotografía analógica de Ingrid Moreau y collage y técnica mixta de Julián Ferreyra.</p>
+      <p>Usá los botones para filtrar por técnica y hacé click en cada obra (o en su nombre en el listado) para verla más grande.</p>
+    </section>
+
+    <!-- galeria de obras -->
+    <section id="galeria">
+      <h2>Obras en sala</h2>
+
+      <!-- barra de filtros (la maneja catalogo.js) -->
+      <div class="filtros">
+        <button type="button" class="filtro filtro-activo" data-filtro="todas">Todas</button>
+        <button type="button" class="filtro" data-filtro="pintura">Pintura</button>
+        <button type="button" class="filtro" data-filtro="ceramica">Cerámica</button>
+        <button type="button" class="filtro" data-filtro="fotografia">Fotografía</button>
+        <button type="button" class="filtro" data-filtro="collage">Collage y mixta</button>
+      </div>
+      <p id="resultado-filtro" class="resultado"></p>
+
+      <div class="galeria">
+
+        <figure data-tecnica="pintura">
+          <a href="#obra1"><img src="img/obra-1.svg" alt="Pintura al óleo de un cielo nocturno en espiral con un ciprés y colinas"></a>
+          <figcaption><strong>Cielo en espiral</strong><br>2024 - Óleo sobre tela - Renata Salas</figcaption>
+        </figure>
+
+        <figure data-tecnica="pintura">
+          <a href="#obra2"><img src="img/obra-2.svg" alt="Pintura acrílica abstracta con bloques de rojo, azul y amarillo en capas"></a>
+          <figcaption><strong>Campos de color</strong><br>2023 - Acrílico sobre tela - Renata Salas</figcaption>
+        </figure>
+
+        <figure data-tecnica="ceramica">
+          <a href="#obra3"><img src="img/obra-3.svg" alt="Vasija de cerámica con esmalte verde y guardas geométricas doradas y blancas"></a>
+          <figcaption><strong>Vasija del barrio</strong><br>2023 - Cerámica esmaltada - Tomás Vega</figcaption>
+        </figure>
+
+        <figure data-tecnica="fotografia">
+          <a href="#obra4"><img src="img/obra-4.svg" alt="Fotografía en blanco y negro del interior de un taller con herramientas colgadas y una ventana"></a>
+          <figcaption><strong>Taller de la calle Norte</strong><br>2024 - Fotografía analógica - Ingrid Moreau</figcaption>
+        </figure>
+
+        <figure data-tecnica="collage">
+          <a href="#obra5"><img src="img/obra-5.svg" alt="Collage de papeles recortados de colores, páginas de diario y formas geométricas"></a>
+          <figcaption><strong>Recortes</strong><br>2022 - Collage - Julián Ferreyra</figcaption>
+        </figure>
+
+        <figure data-tecnica="collage">
+          <a href="#obra6"><img src="img/obra-6.svg" alt="Obra de técnica mixta con un parlante viejo montado sobre un fondo pintado"></a>
+          <figcaption><strong>Objeto recuperado</strong><br>2024 - Técnica mixta - Julián Ferreyra</figcaption>
+        </figure>
+
+      </div>
+    </section>
+
+    <!-- catalogo cargado desde data/obras.xml -->
+    <section>
+      <h2>Catálogo</h2>
+      <div id="catalogo-xml" class="catalogo">Cargando catálogo...</div>
+      <button type="button" id="revisar-xml" class="boton boton-chico">Revisar XML mal formado</button>
+      <p id="prueba-xml"></p>
+    </section>
+
+    <!-- tabla con los datos de las obras -->
+    <section>
+      <h2>Listado de obras</h2>
+      <table>
+        <caption>Obras de la muestra Materias visibles</caption>
+        <thead>
+          <tr>
+            <th scope="col">Título</th>
+            <th scope="col">Artista</th>
+            <th scope="col">Año</th>
+            <th scope="col">Técnica</th>
+            <th scope="col">Precio de consulta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row"><a href="#obra1">Cielo en espiral</a></th>
+            <td>Renata Salas</td>
+            <td>2024</td>
+            <td>Óleo sobre tela</td>
+            <td>Consultar en sala</td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="#obra2">Campos de color</a></th>
+            <td>Renata Salas</td>
+            <td>2023</td>
+            <td>Acrílico sobre tela</td>
+            <td>Consultar en sala</td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="#obra3">Vasija del barrio</a></th>
+            <td>Tomás Vega</td>
+            <td>2023</td>
+            <td>Cerámica esmaltada</td>
+            <td>Consultar en sala</td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="#obra4">Taller de la calle Norte</a></th>
+            <td>Ingrid Moreau</td>
+            <td>2024</td>
+            <td>Fotografía analógica</td>
+            <td>Consultar en sala</td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="#obra5">Recortes</a></th>
+            <td>Julián Ferreyra</td>
+            <td>2022</td>
+            <td>Collage</td>
+            <td>Consultar en sala</td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="#obra6">Objeto recuperado</a></th>
+            <td>Julián Ferreyra</td>
+            <td>2024</td>
+            <td>Técnica mixta</td>
+            <td>Consultar en sala</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ventanas para agrandar las obras (sin javascript, con :target) -->
+    <div id="obra1" class="modal">
+      <a href="#" class="cerrar">X</a>
+      <img src="img/obra-1.svg" alt="Cielo en espiral">
+    </div>
+    <div id="obra2" class="modal">
+      <a href="#" class="cerrar">X</a>
+      <img src="img/obra-2.svg" alt="Campos de color">
+    </div>
+    <div id="obra3" class="modal">
+      <a href="#" class="cerrar">X</a>
+      <img src="img/obra-3.svg" alt="Vasija del barrio">
+    </div>
+    <div id="obra4" class="modal">
+      <a href="#" class="cerrar">X</a>
+      <img src="img/obra-4.svg" alt="Taller de la calle Norte">
+    </div>
+    <div id="obra5" class="modal">
+      <a href="#" class="cerrar">X</a>
+      <img src="img/obra-5.svg" alt="Recortes">
+    </div>
+    <div id="obra6" class="modal">
+      <a href="#" class="cerrar">X</a>
+      <img src="img/obra-6.svg" alt="Objeto recuperado">
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="contenedor">
+      <address>
+        Atelier Norte<br>
+        Calle Ficticia 1240, Ciudad<br>
+        Tel: (0341) 555-0140 - <a href="mailto:hola@ateliernorte.example">hola@ateliernorte.example</a>
+      </address>
+      <ul class="redes">
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">Facebook</a></li>
+        <li><a href="#">YouTube</a></li>
+      </ul>
+      <a href="#arriba">Volver arriba</a>
+    </div>
+  </footer>
+
+  <script src="js/catalogo.js"></script>
+
+  <!-- las obras son dibujos hechos con inteligencia artificial -->
+</body>
+</html>

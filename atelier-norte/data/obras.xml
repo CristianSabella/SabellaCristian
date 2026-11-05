@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- catalogo de la muestra Materias visibles -->
+<catalogo galeria="Atelier Norte" muestra="Materias visibles">
+  <obra anio="2024">
+    <titulo>Cielo en espiral</titulo>
+    <artista>Renata Salas</artista>
+    <tecnica>Óleo sobre tela</tecnica>
+  </obra>
+  <obra anio="2023">
+    <titulo>Campos de color</titulo>
+    <artista>Renata Salas</artista>
+    <tecnica>Acrílico sobre tela</tecnica>
+  </obra>
+  <obra anio="2023">
+    <titulo>Vasija del barrio</titulo>
+    <artista>Tomás Vega</artista>
+    <tecnica>Cerámica esmaltada</tecnica>
+  </obra>
+  <obra anio="2024">
+    <titulo>Taller de la calle Norte</titulo>
+    <artista>Ingrid Moreau</artista>
+    <tecnica>Fotografía analógica</tecnica>
+  </obra>
+  <obra anio="2022">
+    <titulo>Recortes</titulo>
+    <artista>Julián Ferreyra</artista>
+    <tecnica>Collage</tecnica>
+  </obra>
+  <obra anio="2024">
+    <titulo>Objeto recuperado</titulo>
+    <artista>Julián Ferreyra</artista>
+    <tecnica>Técnica mixta</tecnica>
+  </obra>
+</catalogo>

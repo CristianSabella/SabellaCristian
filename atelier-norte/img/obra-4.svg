@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img">
+<title>Taller de la calle Norte - fotografía analógica en blanco y negro</title>
+<defs>
+<filter id="grano"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 0.22"/></feComponentTransfer><feComposite in2="SourceGraphic" operator="in"/></filter>
+<radialGradient id="luz" cx="0.72" cy="0.3" r="0.7"><stop offset="0" stop-color="#e6e6e6"/><stop offset="1" stop-color="#3a3a3a"/></radialGradient>
+<radialGradient id="vineta" cx="0.5" cy="0.5" r="0.75"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.6"/></radialGradient>
+</defs>
+<rect width="400" height="300" fill="url(#luz)"/>
+<rect x="230" y="30" width="130" height="120" fill="#f4f4f4"/>
+<path d="M295,30 L295,150 M230,90 L360,90" stroke="#555" stroke-width="5"/>
+<polygon points="230,150 360,150 330,260 150,260" fill="#ffffff" opacity="0.12"/>
+<rect x="0" y="190" width="400" height="20" fill="#2b2b2b"/>
+<rect x="0" y="210" width="400" height="90" fill="#1c1c1c"/>
+<rect x="40" y="60" width="140" height="8" fill="#222"/>
+<path d="M60,68 L60,110 M90,68 L90,100 M120,68 L120,118 M150,68 L150,96" stroke="#222" stroke-width="4"/>
+<rect x="52" y="110" width="16" height="22" fill="#2a2a2a"/>
+<circle cx="90" cy="108" r="9" fill="none" stroke="#2a2a2a" stroke-width="4"/>
+<rect x="114" y="118" width="12" height="26" fill="#2a2a2a"/>
+<ellipse cx="250" cy="182" rx="42" ry="10" fill="#555"/>
+<path d="M222,182 C222,150 278,150 278,182" fill="#8a8a8a"/>
+<path d="M150,190 C150,160 170,150 186,152 L196,190 Z" fill="#111"/>
+<path d="M186,160 C205,165 220,172 228,178" stroke="#111" stroke-width="12" stroke-linecap="round" fill="none"/>
+<rect width="400" height="300" filter="url(#grano)" fill="#888"/>
+<rect width="400" height="300" fill="url(#vineta)"/>
+<rect x="4" y="4" width="392" height="292" fill="none" stroke="#f2f2f2" stroke-width="8"/>
+</svg>

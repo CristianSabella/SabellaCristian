@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atelier Norte - Inicio</title>
+  <link rel="icon" href="img/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Poppins:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body id="arriba">
+
+  <!-- encabezado con el nombre y el menu -->
+  <header>
+    <div class="contenedor barra">
+      <div class="logo"><a href="index.html">Atelier Norte</a></div>
+      <nav>
+        <ul>
+          <li><a href="index.html" class="actual">Inicio</a></li>
+          <li><a href="artistas.html">Artistas</a></li>
+          <li><a href="exposicion.html">Exposición</a></li>
+          <li><a href="visita.html">Visita</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="contenedor">
+
+    <!-- bienvenida -->
+    <section>
+      <h1 class="titulo">Atelier Norte</h1>
+      <p>Galería de arte contemporáneo de barrio. Un espacio para descubrir pintura, cerámica y fotografía de artistas de la ciudad, con entrada libre y visitas guiadas.</p>
+      <!-- este cartel lo completa visita.js segun el dia -->
+      <p id="estado-atelier" class="estado"></p>
+    </section>
+
+    <!-- las tres tarjetas -->
+    <section>
+      <h2>Lo que tenés que saber</h2>
+      <div class="tarjetas">
+        <div class="tarjeta">
+          <h3>Próxima muestra</h3>
+          <p>Materias visibles: pintura, cerámica y fotografía. De marzo a junio.</p>
+        </div>
+        <div class="tarjeta">
+          <h3>Horarios</h3>
+          <p>Martes a sábado de 14 a 20 h. Domingo y lunes cerrado.</p>
+        </div>
+        <div class="tarjeta">
+          <h3>Ubicación</h3>
+          <p>Calle Ficticia 1240, Ciudad. A dos cuadras de la plaza.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- visitas guiadas -->
+    <section id="visitas">
+      <h2>Visitas guiadas</h2>
+      <p>Recibimos grupos de hasta 15 personas. Escolares con reserva previa.</p>
+      <p><a href="visita.html" class="boton">Ir al formulario de visita</a></p>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="contenedor">
+      <address>
+        Atelier Norte<br>
+        Calle Ficticia 1240, Ciudad<br>
+        Tel: (0341) 555-0140 - <a href="mailto:hola@ateliernorte.example">hola@ateliernorte.example</a>
+      </address>
+      <ul class="redes">
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">Facebook</a></li>
+        <li><a href="#">YouTube</a></li>
+      </ul>
+      <a href="#arriba">Volver arriba</a>
+    </div>
+  </footer>
+
+  <script src="js/visita.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,442 @@
+/* estilos de mi pagina - Atelier Norte */
+/* trabajo de introduccion a la programacion web */
+
+/* colores en variables */
+:root {
+  --fondo: #f7f4ee;
+  --texto: #222222;
+  --acento: #0f6b5c;
+  --borde: #cccccc;
+  --superficie: #ffffff;
+  --sobre-acento: #ffffff;
+  --cerrado: #a3341f;
+  --pie: #222222;
+}
+
+/* opcional: modo oscuro si la compu lo tiene activado */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #1b1a18;
+    --texto: #ece8e1;
+    --acento: #5cc2ad;
+    --borde: #4a4743;
+    --superficie: #262421;
+    --sobre-acento: #10211d;
+    --cerrado: #f08a6e;
+    --pie: #111111;
+  }
+}
+
+/* box-sizing en todo */
+* {
+  box-sizing: border-box;
+}
+
+/* una fuente para el texto y otra para los titulos */
+body {
+  margin: 0;
+  background-color: var(--fondo);
+  color: var(--texto);
+  font-family: "Open Sans", Arial, sans-serif;
+  line-height: 1.6;
+}
+
+h1, h2, h3 {
+  font-family: "Poppins", Arial, sans-serif;
+}
+
+/* que las imagenes no se salgan */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* enlaces con hover y focus */
+a {
+  color: var(--acento);
+}
+a:hover {
+  color: var(--texto);
+}
+a:focus {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* caja central */
+.contenedor {
+  width: 90%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* header */
+header {
+  background-color: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+/* flexbox: en celular el nombre arriba y el menu abajo */
+.barra {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 15px 0;
+}
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+}
+.logo a {
+  color: var(--texto);
+  text-decoration: none;
+}
+
+/* menu apilado en celular */
+nav ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+nav a {
+  text-decoration: none;
+}
+/* pagina actual (opcional) */
+nav a.actual {
+  font-weight: bold;
+  border-bottom: 2px solid var(--acento);
+}
+
+main {
+  padding: 30px 0;
+}
+section {
+  margin-bottom: 40px;
+}
+.titulo {
+  margin-top: 0;
+}
+
+/* cartel de abierto / cerrado */
+.estado {
+  font-weight: bold;
+  font-size: 18px;
+  border-left: 4px solid var(--borde);
+  padding-left: 10px;
+}
+
+/* tarjetas del inicio con flexbox */
+.tarjetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.tarjeta {
+  flex: 1 1 250px;
+  background-color: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 20px;
+}
+.tarjeta h3 {
+  margin-top: 0;
+}
+
+/* artistas */
+.artistas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+.artista {
+  background-color: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 15px;
+}
+.artista img {
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+.artista h2 {
+  margin: 0 0 5px 0;
+}
+
+/* botones de filtro */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.filtro {
+  background-color: var(--superficie);
+  color: var(--texto);
+  border: 2px solid var(--acento);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.filtro:hover {
+  background-color: var(--fondo);
+}
+.filtro:focus {
+  outline: 2px solid var(--texto);
+  outline-offset: 2px;
+}
+.filtro-activo,
+.filtro-activo:hover {
+  background-color: var(--acento);
+  color: var(--sobre-acento);
+}
+.resultado {
+  font-style: italic;
+}
+
+/* galeria de obras con grid */
+.galeria {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+.galeria figure {
+  margin: 0;
+  background-color: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.galeria img {
+  width: 100%;
+  display: block;
+}
+.galeria figcaption {
+  padding: 10px;
+}
+
+/* catalogo que viene del XML */
+.catalogo {
+  background-color: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 10px 20px;
+  margin-bottom: 15px;
+}
+.catalogo p {
+  font-weight: bold;
+}
+
+/* tabla de obras */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+caption {
+  text-align: left;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+th, td {
+  border: 1px solid var(--borde);
+  padding: 8px;
+  text-align: left;
+}
+thead th {
+  background-color: var(--acento);
+  color: var(--sobre-acento);
+}
+
+/* en celular la tabla de registros se puede deslizar de costado */
+.tabla-scroll {
+  overflow-x: auto;
+}
+
+/* formulario con hover y focus */
+form {
+  background-color: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 20px;
+}
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+legend {
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+input, textarea {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid var(--borde);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 16px;
+  background-color: var(--fondo);
+  color: var(--texto);
+}
+input:hover, textarea:hover {
+  border-color: var(--acento);
+}
+input:focus, textarea:focus {
+  outline: 2px solid var(--acento);
+  border-color: var(--acento);
+}
+
+/* checkbox al lado de su texto */
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+.check input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+.check label {
+  margin: 0;
+  font-weight: normal;
+}
+
+.boton {
+  display: inline-block;
+  background-color: var(--acento);
+  color: var(--sobre-acento);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.boton:hover {
+  background-color: var(--texto);
+  color: var(--fondo);
+}
+.boton:focus {
+  outline: 2px solid var(--texto);
+  outline-offset: 2px;
+}
+.boton-chico {
+  font-size: 14px;
+  padding: 6px 14px;
+}
+
+/* resultado de la solicitud */
+.saludo {
+  font-weight: bold;
+  color: var(--acento);
+}
+.confirmacion {
+  font-weight: bold;
+}
+pre {
+  background-color: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 15px;
+  min-height: 60px;
+  overflow-x: auto;
+}
+
+/* footer */
+footer {
+  background-color: var(--pie);
+  color: #eeeeee;
+  padding: 20px 0;
+}
+footer a {
+  color: #ffffff;
+}
+footer a:hover {
+  color: #bfe9df;
+}
+footer a:focus {
+  outline-color: #ffffff;
+}
+footer address {
+  font-style: normal;
+  margin-bottom: 10px;
+}
+.redes {
+  display: flex;
+  gap: 15px;
+  list-style: none;
+  padding: 0;
+}
+
+/* esto agranda la imagen al hacer click, sin javascript (lo vi en un tutorial) */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  padding: 20px;
+  text-align: center;
+}
+.modal:target {
+  display: block;
+}
+.modal img {
+  max-width: 90%;
+  max-height: 80%;
+  margin-top: 50px;
+}
+.cerrar {
+  color: #ffffff;
+  font-size: 30px;
+  text-decoration: none;
+  float: right;
+}
+
+/* para pantallas grandes (en celular queda en una columna) */
+@media (min-width: 768px) {
+  .barra {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  nav ul {
+    flex-direction: row;
+    gap: 20px;
+  }
+  .galeria {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .artistas {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* opcional: al imprimir se oculta el menu */
+@media print {
+  header, footer, form, .modal, .filtros {
+    display: none;
+  }
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+}

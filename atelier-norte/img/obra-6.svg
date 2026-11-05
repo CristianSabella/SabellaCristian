@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img">
+<title>Objeto recuperado - técnica mixta</title>
+<rect width="400" height="300" fill="#3b3330"/>
+<rect x="60" y="30" width="280" height="240" fill="#a07a4f"/>
+<rect x="72" y="42" width="256" height="216" fill="#d8c7a3"/>
+<path d="M72,42 L200,42 L180,140 L72,160 Z" fill="#c45a3c" opacity="0.85"/>
+<path d="M200,42 L328,42 L328,120 L220,150 Z" fill="#3f6f80" opacity="0.85"/>
+<path d="M72,160 L180,140 L230,258 L72,258 Z" fill="#e3b448" opacity="0.8"/>
+<rect x="150" y="96" width="100" height="110" rx="4" fill="#6b6b6b"/>
+<rect x="158" y="104" width="84" height="94" rx="3" fill="#8d8d8d"/>
+<circle cx="200" cy="151" r="26" fill="#5a5a5a"/>
+<circle cx="200" cy="151" r="16" fill="#b9b9b9"/>
+<circle cx="200" cy="151" r="5" fill="#333"/>
+<circle cx="164" cy="110" r="3" fill="#333"/><circle cx="236" cy="110" r="3" fill="#333"/><circle cx="164" cy="192" r="3" fill="#333"/><circle cx="236" cy="192" r="3" fill="#333"/>
+<path d="M250,150 C280,150 290,200 316,226" stroke="#2a2a2a" stroke-width="4" fill="none"/>
+<path d="M90,70 C110,90 120,80 140,100 M100,200 C130,210 150,190 170,230" stroke="#2a2a2a" stroke-width="3" fill="none" opacity="0.6"/>
+<rect x="270" y="190" width="40" height="40" fill="#f3ede2" transform="rotate(10 290 210)"/>
+<path d="M278,200 L304,204 M276,210 L300,214 M274,220 L296,223" stroke="#888" stroke-width="2" transform="rotate(10 290 210)"/>
+</svg>

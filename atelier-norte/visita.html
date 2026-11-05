@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atelier Norte - Solicitar visita</title>
+  <link rel="icon" href="img/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Poppins:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body id="arriba">
+
+  <header>
+    <div class="contenedor barra">
+      <div class="logo"><a href="index.html">Atelier Norte</a></div>
+      <nav>
+        <ul>
+          <li><a href="index.html">Inicio</a></li>
+          <li><a href="artistas.html">Artistas</a></li>
+          <li><a href="exposicion.html">Exposición</a></li>
+          <li><a href="visita.html" class="actual">Visita</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="contenedor">
+
+    <section>
+      <h1 class="titulo">Solicitar visita</h1>
+      <p>Recibimos grupos de hasta 15 personas, de martes a sábado de 14 a 20 h. Escolares con reserva previa.</p>
+      <!-- aca el script pone el saludo si ya hay cookie -->
+      <p id="saludo-cookie" class="saludo"></p>
+    </section>
+
+    <!-- formulario de visita (lo valida visita.js) -->
+    <section id="formulario">
+      <h2>Datos de la visita</h2>
+      <form id="form-visita" action="#" method="post" novalidate>
+        <fieldset>
+          <legend>Reserva de visita guiada</legend>
+
+          <label for="nombre">Nombre y apellido</label>
+          <input type="text" id="nombre" name="nombre">
+
+          <label for="correo">Correo electrónico</label>
+          <input type="email" id="correo" name="correo">
+
+          <label for="fecha">Fecha deseada</label>
+          <input type="date" id="fecha" name="fecha">
+
+          <label for="personas">Cantidad de personas</label>
+          <input type="number" id="personas" name="personas" min="1" max="15">
+
+          <div class="check">
+            <input type="checkbox" id="horarios" name="horarios">
+            <label for="horarios">Acepto los horarios de la galería</label>
+          </div>
+
+          <button type="submit" class="boton">Enviar solicitud</button>
+        </fieldset>
+      </form>
+    </section>
+
+    <!-- resultado: lo escribe el script -->
+    <section>
+      <h2>Tu solicitud</h2>
+      <div id="confirmacion" class="confirmacion"></div>
+      <h3>Pedido en formato JSON</h3>
+      <pre id="pedido-json"></pre>
+      <p><a href="#formulario">Volver al formulario</a></p>
+    </section>
+
+    <!-- mini base de datos: las solicitudes guardadas en localStorage -->
+    <section id="registros">
+      <h2>Solicitudes registradas</h2>
+      <p id="total-registros"></p>
+      <div class="tabla-scroll">
+      <table>
+        <caption>Visitas guardadas en este navegador</caption>
+        <thead>
+          <tr>
+            <th scope="col">N°</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Correo</th>
+            <th scope="col">Fecha de visita</th>
+            <th scope="col">Personas</th>
+            <th scope="col">Registrada el</th>
+            <th scope="col">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-registros"></tbody>
+      </table>
+      </div>
+      <p><button type="button" id="borrar-todo" class="boton boton-chico">Borrar todos los registros</button></p>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="contenedor">
+      <address>
+        Atelier Norte<br>
+        Calle Ficticia 1240, Ciudad<br>
+        Tel: (0341) 555-0140 - <a href="mailto:hola@ateliernorte.example">hola@ateliernorte.example</a>
+      </address>
+      <ul class="redes">
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">Facebook</a></li>
+        <li><a href="#">YouTube</a></li>
+      </ul>
+      <a href="#arriba">Volver arriba</a>
+    </div>
+  </footer>
+
+  <script src="js/visita.js"></script>
+</body>
+</html>
