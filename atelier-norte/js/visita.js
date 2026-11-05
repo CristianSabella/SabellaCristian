@@ -45,7 +45,12 @@ function leerCookie(nombre) {
 const saludo = document.getElementById("saludo-cookie");
 
 if (saludo) {
-  const guardado = leerCookie("visitante");
+  let guardado = leerCookie("visitante");
+  // si se abre con doble clic (file://) Chrome no guarda cookies,
+  // entonces uso el nombre que quedo guardado en sessionStorage
+  if (guardado === "" && sessionStorage.getItem("visitante")) {
+    guardado = sessionStorage.getItem("visitante");
+  }
   if (guardado !== "") {
     saludo.textContent = "Hola de nuevo, " + guardado;
   } else {
@@ -223,6 +228,7 @@ if (formulario) {
 
     // guardo la cookie y actualizo el saludo
     document.cookie = "visitante=" + encodeURIComponent(nombre) + "; path=/";
+    sessionStorage.setItem("visitante", nombre); // respaldo para file://
     saludo.textContent = "Hola de nuevo, " + nombre;
 
     // aviso a los 2 segundos

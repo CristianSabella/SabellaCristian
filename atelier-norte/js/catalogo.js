@@ -36,6 +36,17 @@ filtrar("todas");
 // ---------- catalogo desde XML ----------
 const catalogo = document.getElementById("catalogo-xml");
 
+// copia de data/obras.xml para cuando la pagina se abre sin servidor
+const XML_RESPALDO = `<?xml version="1.0" encoding="UTF-8"?>
+<catalogo galeria="Atelier Norte" muestra="Materias visibles">
+  <obra anio="2024"><titulo>Cielo en espiral</titulo><artista>Renata Salas</artista><tecnica>Óleo sobre tela</tecnica></obra>
+  <obra anio="2023"><titulo>Campos de color</titulo><artista>Renata Salas</artista><tecnica>Acrílico sobre tela</tecnica></obra>
+  <obra anio="2023"><titulo>Vasija del barrio</titulo><artista>Tomás Vega</artista><tecnica>Cerámica esmaltada</tecnica></obra>
+  <obra anio="2024"><titulo>Taller de la calle Norte</titulo><artista>Ingrid Moreau</artista><tecnica>Fotografía analógica</tecnica></obra>
+  <obra anio="2022"><titulo>Recortes</titulo><artista>Julián Ferreyra</artista><tecnica>Collage</tecnica></obra>
+  <obra anio="2024"><titulo>Objeto recuperado</titulo><artista>Julián Ferreyra</artista><tecnica>Técnica mixta</tecnica></obra>
+</catalogo>`;
+
 // devuelve el documento XML o null si esta mal formado
 function leerXML(texto) {
   const documento = new DOMParser().parseFromString(texto, "application/xml");
@@ -89,7 +100,9 @@ fetch("data/obras.xml")
   })
   .then(mostrarCatalogo)
   .catch(function () {
-    catalogo.textContent = "No se pudo cargar el catálogo. Abrí el sitio con un servidor local (por ejemplo Live Server).";
+    // si se abre con doble clic (file://) el navegador bloquea fetch,
+    // entonces uso una copia del mismo XML y lo leo igual con DOMParser
+    mostrarCatalogo(XML_RESPALDO);
   });
 
 // ---------- opcional: probar un XML mal formado ----------
