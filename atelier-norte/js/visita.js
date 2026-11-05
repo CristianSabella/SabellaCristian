@@ -62,12 +62,13 @@ function formatearFecha(fecha) {
   return partes[2] + "/" + partes[1] + "/" + partes[0];
 }
 
-// ---------- mini base de datos con localStorage ----------
-// las solicitudes se guardan como texto JSON en el navegador
+// ---------- mini base de datos con sessionStorage ----------
+// sessionStorage: los datos duran mientras la pestaña está abierta y se borran al cerrarla
+// las solicitudes se guardan como texto JSON
 const CLAVE_BD = "atelier-solicitudes";
 
 function leerRegistros() {
-  const texto = localStorage.getItem(CLAVE_BD);
+  const texto = sessionStorage.getItem(CLAVE_BD);
   if (texto === null) {
     return [];
   }
@@ -75,7 +76,7 @@ function leerRegistros() {
 }
 
 function guardarRegistros(lista) {
-  localStorage.setItem(CLAVE_BD, JSON.stringify(lista));
+  sessionStorage.setItem(CLAVE_BD, JSON.stringify(lista));
 }
 
 // agrega una solicitud nueva con su numero y la fecha en que se registro
@@ -153,7 +154,7 @@ const botonBorrarTodo = document.getElementById("borrar-todo");
 if (botonBorrarTodo) {
   botonBorrarTodo.addEventListener("click", function () {
     if (window.confirm("¿Borrar todas las solicitudes guardadas?")) {
-      localStorage.removeItem(CLAVE_BD);
+      sessionStorage.removeItem(CLAVE_BD);
       mostrarRegistros();
     }
   });
