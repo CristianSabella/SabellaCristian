@@ -126,7 +126,10 @@
   var zonaMensajes = ventana.querySelector("#charlie-mensajes");
   var input = ventana.querySelector("#charlie-input");
 
+  // data-nombre="..." en el <script> cambia el nombre que se muestra (gana sobre el del servidor)
+  var NOMBRE_FIJO = script && script.getAttribute("data-nombre");
   function aplicarConfig() {
+    if (NOMBRE_FIJO) bot.nombre = NOMBRE_FIJO;
     [burbuja, ventana].forEach(function (el) {
       el.style.setProperty("--charlie-color", bot.colorPrincipal);
       el.style.setProperty("--charlie-fondo", bot.colorFondo);

@@ -534,15 +534,15 @@
     </div>
 
     <div class="card featured reveal" data-c="web">
-      <div class="thumb"><span class="badge live">Nuevo</span><img src="img/charlie-bordo.jpg" alt="Charlie Bordó: chat claro con botones bordó" loading="lazy"></div>
+      <div class="thumb"><span class="badge live">Nuevo</span><img src="img/charlie-bordo.jpg" alt="Friday: chat claro con botones bordó" loading="lazy"></div>
       <div class="card-body">
-        <h3>Charlie Bordó — Nueva interfaz</h3>
-        <p>Otra versión de Charlie con una interfaz más elegante: el mismo cerebro y los mismos flujos, con un chat rediseñado en bordó, letras serif y una experiencia más cuidada.</p>
+        <h3>Friday — Nueva interfaz</h3>
+        <p>Otra versión de Jarvis con una interfaz más elegante: el mismo cerebro y los mismos flujos, con un chat rediseñado en bordó, letras serif y una experiencia más cuidada.</p>
         <ul>
           <li>Tipografía elegante (Cormorant Garamond + Jost) y paleta en bordó.</li>
           <li>La opción elegida queda marcada en la charla y las demás se atenúan.</li>
           <li>Indicador de "escribiendo", animaciones suaves y versión para celular.</li>
-          <li>Convive con el Charlie original en la misma página sin pisarse.</li>
+          <li>Convive con Jarvis en la misma página sin pisarse.</li>
         </ul>
         <div class="tech"><span>JavaScript</span><span>CSS</span><span>Node.js</span><span>Cloudflare Workers</span><span>Diseño UI</span></div>
         <div class="links"><a href="#" onclick="var b=document.getElementById('cig-burbuja'); if(b){b.click();} return false;"><i class="fas fa-comments"></i> Probalo acá</a><a href="https://charlie-bordo.cristiansabella57.workers.dev/demo" target="_blank" rel="noopener"><i class="fas fa-up-right-from-square"></i> Ver demo</a></div>
@@ -550,9 +550,9 @@
     </div>
 
     <div class="card featured reveal" data-c="web">
-      <div class="thumb"><span class="badge live">En línea</span><img src="img/charlie.jpg" alt="Charlie, el chatbot de Cristian Sabella, respondiendo en una página web" loading="lazy"></div>
+      <div class="thumb"><span class="badge live">En línea</span><img src="img/charlie.jpg" alt="Jarvis, el chatbot de Cristian Sabella, respondiendo en una página web" loading="lazy"></div>
       <div class="card-body">
-        <h3>Charlie — Chatbot multicanal</h3>
+        <h3>Jarvis — Chatbot multicanal</h3>
         <p>Mi asistente virtual: atiende a los visitantes, muestra mis servicios y arma pedidos de cotización. Un solo "cerebro" sirve para la web, WhatsApp y apps.</p>
         <ul>
           <li>Motor de conversaciones propio: los flujos se editan en JSON, sin tocar código.</li>
@@ -908,11 +908,40 @@
 </script>
 <script src="js/juegos.js" defer></script>
 
-<!-- Charlie: chatbot (Cloudflare Workers). Va arriba del botón de WhatsApp -->
-<script src="js/charlie-widget.js" data-servidor="https://charlie-bot.cristiansabella57.workers.dev" data-abajo="96" data-derecha="24" defer></script>
+<!-- Jarvis (antes Charlie): chatbot (Cloudflare Workers). Va arriba del botón de WhatsApp -->
+<script src="js/charlie-widget.js" data-nombre="Jarvis" data-servidor="https://charlie-bot.cristiansabella57.workers.dev" data-abajo="96" data-derecha="24" defer></script>
 
-<!-- Charlie Bordó (nueva interfaz). Va arriba de la burbuja de Charlie -->
+<!-- Friday (antes Charlie Bordó, nueva interfaz). Va arriba de la burbuja de Jarvis -->
 <script src="https://charlie-bordo.cristiansabella57.workers.dev/widget.js" data-abajo="172" data-derecha="24" defer></script>
+<script>
+// Nombres en la web: el chat bordó se llama Friday y el azul Jarvis.
+// Los servidores todavía dicen "Charlie", así que acá se cambia lo que se muestra (encabezado, mensajes y etiquetas).
+(function () {
+  const REEMPLAZOS = [
+    { zona: '[id^="cig-"]', cambiar: [[/Charlie\s+Bord[oó]/gi, 'Friday'], [/Charlie/g, 'Friday'], [/CHARLIE/g, 'FRIDAY']] },
+    { zona: '[id^="charlie-"]', cambiar: [[/Charlie/g, 'Jarvis'], [/CHARLIE/g, 'JARVIS']] }
+  ];
+  function arreglarTexto(txt, cambios) { cambios.forEach(([re, por]) => { txt = txt.replace(re, por); }); return txt; }
+  function revisar(nodo) {
+    const el = nodo.nodeType === 1 ? nodo : nodo.parentElement; if (!el || !el.closest) return;
+    for (const r of REEMPLAZOS) {
+      const raiz = el.closest(r.zona); if (!raiz) continue;
+      const tw = document.createTreeWalker(nodo.nodeType === 1 ? nodo : el, NodeFilter.SHOW_TEXT);
+      for (let t = nodo.nodeType === 3 ? nodo : tw.nextNode(); t; t = nodo.nodeType === 3 ? null : tw.nextNode()) {
+        if (/charlie/i.test(t.nodeValue)) t.nodeValue = arreglarTexto(t.nodeValue, r.cambiar);
+      }
+      const elems = nodo.nodeType === 1 ? [nodo, ...nodo.querySelectorAll('*')] : [];
+      elems.forEach(e => ['aria-label', 'title', 'placeholder', 'alt'].forEach(at => { const v = e.getAttribute(at); if (v && /charlie/i.test(v)) e.setAttribute(at, arreglarTexto(v, r.cambiar)); }));
+      return;
+    }
+  }
+  new MutationObserver(lista => lista.forEach(m => {
+    if (m.type === 'characterData') revisar(m.target);
+    else if (m.type === 'attributes') revisar(m.target);
+    else m.addedNodes.forEach(revisar);
+  })).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['aria-label', 'title', 'placeholder', 'alt'] });
+})();
+</script>
 
 
 <script>
@@ -1027,7 +1056,7 @@
       el.classList.add('pulsa');
     }
     function pausado() {
-      // Un chat abierto (Charlie o Charlie Bordó) o haber ido a WhatsApp frena a todos
+      // Un chat abierto (Jarvis o Friday) o haber ido a WhatsApp frena a todos
       if (document.querySelector('#charlie-ventana.abierta, #cig-ventana.abierta')) return true;
       return pausaWhatsapp;
     }
@@ -1035,7 +1064,7 @@
       const frenar = pausado();
       botones.forEach(b => {
         const el = document.getElementById(b.id);
-        if (!el) return; // Charlie y Charlie Bordó aparecen unos segundos después
+        if (!el) return; // Jarvis y Friday aparecen unos segundos después
         const debe = !frenar && !(b.musica && userPaused); // la música pausada a propósito no titila
         const tiene = el.classList.contains('pulsa');
         if (debe && !tiene) prender(el, b.turno);
