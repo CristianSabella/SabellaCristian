@@ -64,6 +64,9 @@
   .b { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 10px; font-weight: 700; font-size: 15px; transition: .2s; }
   .b-main { background: var(--blue); color: #021022; }
   .b-main:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(79,195,255,.35); }
+  /* "Ver proyectos" titila con su mismo celeste, igual que el brillo de Juegos pero sin cambiar de color */
+  a.b-main[href="#proyectos"] { animation: brillo-celeste .9s ease-out infinite; }
+  @keyframes brillo-celeste { 0% { box-shadow: 0 0 0 0 rgba(79,195,255,1), 0 0 14px rgba(79,195,255,.6); } 60% { box-shadow: 0 0 0 14px rgba(79,195,255,.25), 0 0 14px rgba(79,195,255,.6); } 61%, 100% { box-shadow: 0 0 0 0 rgba(79,195,255,0), 0 0 14px rgba(79,195,255,.6); } }
   .b-ghost { border: 1px solid var(--line); color: var(--text); }
   .b-ghost:hover { border-color: var(--blue); background: var(--blue-soft); }
   .socials { display: flex; gap: 14px; margin-top: 26px; }
