@@ -170,16 +170,16 @@
   #audio-control { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--pink); color: #fff; cursor: pointer; }
   #audio-volume { width: 80px; accent-color: var(--pink); }
   /* Titileo de los botones flotantes: titilan como el de WhatsApp, de a uno por vez, en orden al azar.
-     Ciclo de 2 s: cada botón tiene su turno de 0,5 s, así nunca se pisan (el script de abajo les da el turno) */
-  .pulsa { animation-duration: 2s; animation-iteration-count: infinite; animation-timing-function: ease-out; }
+     Ciclo de 0,8 s: cada botón tiene su turno de 0,2 s, así nunca se pisan (el script de abajo les da el turno) */
+  .pulsa { animation-duration: .8s; animation-iteration-count: infinite; animation-timing-function: ease-out; }
   #audio-control.pulsa { animation-name: p-musica; }
   #whatsapp-btn.pulsa { animation-name: p-wa; }
   #charlie-burbuja.pulsa { animation-name: p-charlie; }
   #cig-burbuja.pulsa { animation-name: p-bordo; }
-  @keyframes p-musica { 0% { box-shadow: 0 0 0 0 rgba(214,59,176,.9); } 18% { box-shadow: 0 0 0 16px rgba(214,59,176,0); } 19% { box-shadow: 0 0 0 0 rgba(214,59,176,0); } 100% { box-shadow: 0 0 0 0 rgba(214,59,176,0); } }
-  @keyframes p-wa { 0% { box-shadow: 0 0 0 0 rgba(37,211,102,.8); } 18% { box-shadow: 0 0 0 16px rgba(37,211,102,0); } 19% { box-shadow: 0 0 0 0 rgba(37,211,102,0); } 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0); } }
-  @keyframes p-charlie { 0% { box-shadow: 0 0 0 0 rgba(30,111,217,.85), 0 4px 14px rgba(0,0,0,.35); } 18% { box-shadow: 0 0 0 16px rgba(30,111,217,0), 0 4px 14px rgba(0,0,0,.35); } 19% { box-shadow: 0 0 0 0 rgba(30,111,217,0), 0 4px 14px rgba(0,0,0,.35); } 100% { box-shadow: 0 0 0 0 rgba(30,111,217,0), 0 4px 14px rgba(0,0,0,.35); } }
-  @keyframes p-bordo { 0% { box-shadow: 0 0 0 0 rgba(201,61,90,.9), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } 18% { box-shadow: 0 0 0 16px rgba(201,61,90,0), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } 19% { box-shadow: 0 0 0 0 rgba(201,61,90,0), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } 100% { box-shadow: 0 0 0 0 rgba(201,61,90,0), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } }
+  @keyframes p-musica { 0% { box-shadow: 0 0 0 0 rgba(214,59,176,1); } 18% { box-shadow: 0 0 0 16px rgba(214,59,176,.3); } 19% { box-shadow: 0 0 0 0 rgba(214,59,176,0); } 100% { box-shadow: 0 0 0 0 rgba(214,59,176,0); } }
+  @keyframes p-wa { 0% { box-shadow: 0 0 0 0 rgba(37,211,102,1); } 18% { box-shadow: 0 0 0 16px rgba(37,211,102,.3); } 19% { box-shadow: 0 0 0 0 rgba(37,211,102,0); } 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0); } }
+  @keyframes p-charlie { 0% { box-shadow: 0 0 0 0 rgba(30,111,217,1), 0 4px 14px rgba(0,0,0,.35); } 18% { box-shadow: 0 0 0 16px rgba(30,111,217,.3), 0 4px 14px rgba(0,0,0,.35); } 19% { box-shadow: 0 0 0 0 rgba(30,111,217,0), 0 4px 14px rgba(0,0,0,.35); } 100% { box-shadow: 0 0 0 0 rgba(30,111,217,0), 0 4px 14px rgba(0,0,0,.35); } }
+  @keyframes p-bordo { 0% { box-shadow: 0 0 0 0 rgba(201,61,90,1), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } 18% { box-shadow: 0 0 0 16px rgba(201,61,90,.3), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } 19% { box-shadow: 0 0 0 0 rgba(201,61,90,0), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } 100% { box-shadow: 0 0 0 0 rgba(201,61,90,0), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } }
 
   /* REVEAL */
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s, transform .7s; }
@@ -607,8 +607,8 @@
 
   // Titileo de los botones flotantes
   try {
-    // Orden al azar en cada visita: a cada botón le toca un turno distinto (0; 0,5; 1 o 1,5 s del ciclo de 2 s)
-    const turnos = [0, 0.5, 1, 1.5].sort(() => Math.random() - 0.5);
+    // Orden al azar en cada visita: a cada botón le toca un turno distinto (0; 0,2; 0,4 o 0,6 s del ciclo de 0,8 s)
+    const turnos = [0, 0.2, 0.4, 0.6].sort(() => Math.random() - 0.5);
     const botones = [
       { id: 'audio-control', turno: turnos[0], musica: true },
       { id: 'whatsapp-btn', turno: turnos[1] },
@@ -619,8 +619,8 @@
 
     function prender(el, turno) {
       // Ajusta el retraso para que todos sigan el mismo reloj y nunca titilen dos juntos
-      const ahora = (Date.now() / 1000) % 2;
-      el.style.animationDelay = (((turno - ahora) % 2) - 2) + 's';
+      const ahora = (Date.now() / 1000) % 0.8;
+      el.style.animationDelay = (((turno - ahora) % 0.8) - 0.8) + 's';
       el.classList.add('pulsa');
     }
     function pausado() {
