@@ -170,8 +170,10 @@
   #audio-control { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--pink); color: #fff; cursor: pointer; }
   #audio-volume { width: 80px; accent-color: var(--pink); }
   /* Titileo de los botones flotantes: titila uno al azar por vez (lo maneja el script de abajo) */
-  .titila::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; animation: titileo 1.2s ease-out; }
-  @keyframes titileo { 0% { box-shadow: 0 0 0 0 var(--pulso, rgba(214,59,176,.85)); } 100% { box-shadow: 0 0 0 16px rgba(0,0,0,0); } }
+  .titila { animation: rebote .45s ease-out 2; }
+  .titila::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; animation: titileo .9s ease-out 2; }
+  @keyframes titileo { 0% { box-shadow: 0 0 0 0 var(--pulso, rgba(214,59,176,.95)); } 100% { box-shadow: 0 0 0 22px rgba(0,0,0,0); } }
+  @keyframes rebote { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.15); } }
 
   /* REVEAL */
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s, transform .7s; }
@@ -580,14 +582,17 @@
   });
   // Intenta arrancar sola apenas carga (algunos navegadores lo permiten, sobre todo si ya visitaste la web)
   playAudio();
-  // Si el navegador la bloqueó, arranca con el primer clic, toque o tecla en cualquier parte
-  const gestos = ['pointerdown', 'keydown', 'touchend'];
+  // Si el navegador la bloqueó, arranca con el primer clic, toque o tecla en cualquier parte.
+  // Se sigue intentando con cada toque hasta que la música suene de verdad (en el celular
+  // el navegador solo la habilita al levantar el dedo, no al apoyarlo)
+  const gestos = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
+  function quitarGestos() { gestos.forEach(ev => document.removeEventListener(ev, primerGesto, true)); }
   function primerGesto(e) {
     if (e.target.closest && e.target.closest('#audio-box')) return;
-    if (audio.paused && !userPaused) playAudio();
-    gestos.forEach(ev => document.removeEventListener(ev, primerGesto));
+    if (userPaused || !audio.paused) { quitarGestos(); return; }
+    audio.play().then(() => { icon.className = 'fas fa-pause'; quitarGestos(); }).catch(() => {});
   }
-  gestos.forEach(ev => document.addEventListener(ev, primerGesto));
+  gestos.forEach(ev => document.addEventListener(ev, primerGesto, true));
 
   // Titileo de los botones flotantes: cada 2 segundos titila uno al azar (nunca el mismo dos veces seguidas)
   (function () {
