@@ -34,9 +34,6 @@
     .j-dato small{display:block;color:${GRIS};font-size:11px}
     .j-dato b{font-size:18px;color:${TEXTO}}
     .j-dato canvas{cursor:default}
-    /* En el celular, mientras los juegos están en pantalla, se esconden los botones flotantes para que no tapen */
-    #whatsapp-btn,#audio-box,#charlie-burbuja,#cig-burbuja{transition:opacity .3s}
-    body.j-en-pantalla #whatsapp-btn,body.j-en-pantalla #audio-box,body.j-en-pantalla #charlie-burbuja,body.j-en-pantalla #cig-burbuja{opacity:0;pointer-events:none}
   `;
   document.head.appendChild(css);
 
@@ -482,17 +479,35 @@
   });
 
   // Si el juego no está en pantalla, se congela
-  let visible = true;
-  if ('IntersectionObserver' in window) {
+  let visible = true, antes = performance.now();
+  const ventana = document.getElementById('ventana-juegos');
+  if (ventana) {
+    // Los juegos viven en una ventana encima de la página: solo corren mientras está abierta
+    visible = false;
+    function elegir(nombre) {
+      const b = app.querySelector(`.j-tabs button[data-j="${nombre}"]`);
+      if (b) b.click();
+    }
+    function abrir(nombre) {
+      ventana.hidden = false; document.body.classList.add('juego-abierto');
+      visible = true; activo = true; antes = performance.now();
+      elegir(juegos[nombre] ? nombre : actual);
+      juegos[actual].medir();
+      const menu = document.querySelector('.nav-links'); if (menu) menu.classList.remove('open');
+    }
+    function cerrar() {
+      ventana.hidden = true; document.body.classList.remove('juego-abierto');
+      visible = false; activo = false;
+    }
+    document.querySelectorAll('[data-jugar]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); abrir(el.dataset.jugar); }));
+    ventana.querySelector('.vj-x').addEventListener('click', cerrar);
+    ventana.addEventListener('pointerdown', e => { if (e.target === ventana) cerrar(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !ventana.hidden) cerrar(); });
+  } else if ('IntersectionObserver' in window) {
     new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(app);
-    // En pantallas chicas, esconde los botones flotantes mientras se ve buena parte del juego
-    new IntersectionObserver(es => {
-      document.body.classList.toggle('j-en-pantalla', es[0].intersectionRatio > 0.35 && window.innerWidth < 760);
-    }, { threshold: [0, 0.35, 0.6, 1] }).observe(app);
   }
   window.addEventListener('resize', () => juegos[actual].medir());
 
-  let antes = performance.now();
   function bucle(t) {
     const dt = Math.min(0.05, (t - antes) / 1000); antes = t;
     if (visible) { try { juegos[actual].update(dt); juegos[actual].dibujar(); } catch (e) { console.error(e); } }
