@@ -85,7 +85,7 @@ window.ArenaHelada = function (caja, opciones) {
 
   // ---------- Escena ----------
   const render = new T.WebGLRenderer({ antialias: !tactil, powerPreference: 'high-performance' });
-  render.setPixelRatio(Math.min(window.devicePixelRatio || 1, tactil ? 1.25 : 1.5));
+  render.setPixelRatio(Math.min(window.devicePixelRatio || 1, tactil ? 1 : 1.25));
   vista.prepend(render.domElement);
   const escena = new T.Scene();
   escena.background = new T.Color('#040814');
@@ -110,7 +110,12 @@ window.ArenaHelada = function (caja, opciones) {
   }
   // Piso y grilla
   caja3(60, 0.2, 60, M.nieve, 0, -0.1, 0, false);
-  for (let i = -30; i <= 30; i += 3) { caja3(0.04, 0.01, 60, M.linea, i, 0.01, 0, false); caja3(60, 0.01, 0.04, M.linea, 0, 0.011, i, false); }
+  { // grilla en un solo dibujo (antes eran 42 piezas sueltas)
+    const pg = [];
+    for (let i = -30; i <= 30; i += 3) pg.push(i, 0.01, -30, i, 0.01, 30, -30, 0.011, i, 30, 0.011, i);
+    const gg = new T.BufferGeometry(); gg.setAttribute('position', new T.Float32BufferAttribute(pg, 3));
+    escena.add(new T.LineSegments(gg, new T.LineBasicMaterial({ color: '#4fc3ff', transparent: true, opacity: 0.16 })));
+  }
   // Muros de la arena
   caja3(42, 6, 1, M.hielo, 0, 3, -20.5); caja3(42, 6, 1, M.hielo, 0, 3, 20.5);
   caja3(1, 6, 42, M.hielo, -20.5, 3, 0); caja3(1, 6, 42, M.hielo, 20.5, 3, 0);
@@ -216,17 +221,20 @@ window.ArenaHelada = function (caja, opciones) {
     if (libre(o.x + dx, o.z, r)) o.x += dx;
     if (libre(o.x, o.z + dz, r)) o.z += dz;
   }
+  const rangoT = [0, 0];
+  function eje(oo, dd, lo, hi) {
+    if (Math.abs(dd) < 1e-9) return oo >= lo && oo <= hi;
+    let a = (lo - oo) / dd, c = (hi - oo) / dd; if (a > c) { const x = a; a = c; c = x; }
+    if (a > rangoT[0]) rangoT[0] = a; if (c < rangoT[1]) rangoT[1] = c;
+    return rangoT[0] <= rangoT[1];
+  }
   // Rayo contra cajas: devuelve la distancia al primer choque
   function rayoCajas(o, d, max) {
     let mejor = max;
     for (const b of solidos) {
-      let t0 = 0, t1 = mejor, ok = true;
-      for (const [oo, dd, lo, hi] of [[o.x, d.x, b.x0, b.x1], [o.y, d.y, b.y0, b.y1], [o.z, d.z, b.z0, b.z1]]) {
-        if (Math.abs(dd) < 1e-9) { if (oo < lo || oo > hi) { ok = false; break; } continue; }
-        let a = (lo - oo) / dd, c = (hi - oo) / dd; if (a > c) [a, c] = [c, a];
-        t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 > t1) { ok = false; break; }
-      }
-      if (ok && t0 < mejor) mejor = t0;
+      // Sin crear arrays nuevos en cada rayo: así el navegador no frena para limpiar memoria (eso daba tirones)
+      rangoT[0] = 0; rangoT[1] = mejor;
+      if (eje(o.x, d.x, b.x0, b.x1) && eje(o.y, d.y, b.y0, b.y1) && eje(o.z, d.z, b.z0, b.z1) && rangoT[0] < mejor) mejor = rangoT[0];
     }
     if (d.y < 0) { const tp = -o.y / d.y; if (tp < mejor) mejor = tp; }
     return mejor;
@@ -265,13 +273,17 @@ window.ArenaHelada = function (caja, opciones) {
     ui.feed.prepend(d); while (ui.feed.children.length > 4) ui.feed.lastChild.remove();
     setTimeout(() => { d.style.opacity = 0; setTimeout(() => d.remove(), 600); }, 4000);
   }
+  const hudPrevio = {};
+  function poner(k, v, fn) { if (hudPrevio[k] !== v) { hudPrevio[k] = v; fn(v); } } // solo toca la página si el valor cambió
   function actualizarHud() {
-    const vivos = bots.filter(b => b.vivo).length;
-    ui.ronda.textContent = Math.max(1, ronda);
-    ui.reloj.textContent = Math.floor(tiempo / 60) + ':' + String(Math.floor(tiempo % 60)).padStart(2, '0');
-    ui.bots.textContent = vivos + ' / ' + N_BOTS;
-    ui.vida.textContent = Math.max(0, Math.round(jugador.vida)); ui.barra.style.width = Math.max(0, jugador.vida) + '%';
-    ui.bajas.textContent = totales.bajas; ui.muertes.textContent = totales.muertes; ui.energia.textContent = Math.floor(energia);
+    let vivos = 0; for (const b of bots) if (b.vivo) vivos++;
+    poner('ronda', Math.max(1, ronda), v => ui.ronda.textContent = v);
+    poner('reloj', Math.floor(tiempo / 60) + ':' + String(Math.floor(tiempo % 60)).padStart(2, '0'), v => ui.reloj.textContent = v);
+    poner('bots', vivos, v => ui.bots.textContent = v + ' / ' + N_BOTS);
+    poner('vida', Math.max(0, Math.round(jugador.vida)), v => { ui.vida.textContent = v; ui.barra.style.width = v + '%'; });
+    poner('bajas', totales.bajas, v => ui.bajas.textContent = v);
+    poner('muertes', totales.muertes, v => ui.muertes.textContent = v);
+    poner('energia', Math.floor(energia), v => ui.energia.textContent = v);
   }
 
   // ---------- Disparo del jugador ----------
@@ -467,7 +479,9 @@ window.ArenaHelada = function (caja, opciones) {
     }
     actualizarHud();
   }
+  let radarT = 0;
   function dibujarRadar() {
+    const ahora = performance.now(); if (ahora - radarT < 50) return; radarT = ahora; // el radar se dibuja 20 veces por segundo, alcanza
     const s = 168, c = s / 2, esc = c / 26; rx.clearRect(0, 0, s, s);
     rx.strokeStyle = 'rgba(79,195,255,.18)'; rx.beginPath(); rx.arc(c, c, c * 0.5, 0, 7); rx.stroke();
     bots.forEach(b => {
@@ -475,9 +489,9 @@ window.ArenaHelada = function (caja, opciones) {
       const dx = b.x - jugador.x, dz = b.z - jugador.z;
       const rxp = dx * Math.cos(jugador.yaw) - dz * Math.sin(jugador.yaw), rzp = dx * Math.sin(jugador.yaw) + dz * Math.cos(jugador.yaw);
       const px = c + rxp * esc, py = c + rzp * esc; if (Math.hypot(px - c, py - c) > c - 6) return;
-      rx.fillStyle = '#d63bb0'; rx.shadowColor = '#d63bb0'; rx.shadowBlur = 8; rx.beginPath(); rx.arc(px, py, 6, 0, 7); rx.fill();
+      rx.fillStyle = 'rgba(214,59,176,.35)'; rx.beginPath(); rx.arc(px, py, 9, 0, 7); rx.fill(); rx.fillStyle = '#d63bb0'; rx.beginPath(); rx.arc(px, py, 6, 0, 7); rx.fill();
     });
-    rx.shadowBlur = 0; rx.fillStyle = '#4fc3ff'; rx.beginPath(); rx.moveTo(c, c - 9); rx.lineTo(c + 6, c + 6); rx.lineTo(c - 6, c + 6); rx.closePath(); rx.fill();
+    rx.fillStyle = '#4fc3ff'; rx.beginPath(); rx.moveTo(c, c - 9); rx.lineTo(c + 6, c + 6); rx.lineTo(c - 6, c + 6); rx.closePath(); rx.fill();
   }
   function dibujar() {
     cam.position.set(jugador.x, 1.65 + Math.abs(Math.sin(paso)) * 0.03, jugador.z);

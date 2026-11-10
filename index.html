@@ -199,6 +199,9 @@
   .vj-x { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(79,195,255,.3); background: rgba(79,195,255,.1); color: var(--text); font-size: 18px; cursor: pointer; }
   .vj-nota { color: var(--muted); font-size: 12px; text-align: center; margin-top: 10px; }
   body.juego-abierto { overflow: hidden; }
+  /* Con un juego abierto la página de atrás no se dibuja: así el juego tiene toda la potencia para él */
+  body.juego-abierto #ventana-juegos { background: #020712; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  body.juego-abierto > :not(#ventana-juegos) { visibility: hidden; }
   /* Botones de juegos que cambian de color: un color nuevo cada 0,3 segundos (12 colores, vuelta completa en 3,6 s) */
   /* Además titilan con un brillo del mismo color que tienen en ese momento (el filtro de color también tiñe el brillo) */
   .nav-jugar, .b-jugar, .nav-links a[data-jugar] { animation: arcoiris 3.6s steps(12) infinite, brillo-juego .9s ease-out infinite; }
@@ -796,6 +799,7 @@
   resize();
   window.addEventListener('resize', resize);
   function drawBinary() {
+    if (document.body.classList.contains('juego-abierto')) return; // pausado mientras se juega
     ctx.fillStyle = 'rgba(5,11,20,0.15)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.font = fontSize + 'px monospace';
