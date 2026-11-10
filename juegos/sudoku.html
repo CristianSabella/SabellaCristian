@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Sudoku | Cristian Sabella</title>
+<style>
+  :root {
+    --bg: #020712; --panel: #050b14; --celda: #0b1828; --line: rgba(79,195,255,.25);
+    --blue: #4fc3ff; --pink: #d63bb0; --violeta: #8b5cf6; --text: #e6f4ff; --muted: #8fa9c4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, sans-serif; display: grid; place-items: center; padding: 16px; }
+  .juego { width: min(460px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .arriba { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  h1 { margin: 0; font-size: 30px; font-weight: 800; background: linear-gradient(135deg, var(--blue), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .datos { margin-left: auto; display: flex; gap: 8px; }
+  .dato { background: #071222; border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; text-align: center; min-width: 62px; }
+  .dato small { display: block; color: var(--muted); font-size: 11px; font-weight: 600; }
+  .dato b { font-size: 17px; }
+  .dificultad { display: flex; gap: 6px; margin-bottom: 12px; }
+  .btn { flex: 1; padding: 10px 0; border-radius: 12px; border: 1px solid rgba(79,195,255,.3); background: rgba(79,195,255,.08); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+  .btn.on, .btn.main { background: linear-gradient(135deg, var(--blue), var(--pink)); border-color: transparent; color: #fff; }
+  .sonido { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 6px 12px 6px 6px; border-radius: 12px; background: rgba(214,59,176,.07); border: 1px solid rgba(214,59,176,.3); }
+  .sonido button { width: 34px; height: 34px; flex: none; border-radius: 50%; border: 0; background: var(--pink); color: #fff; font-size: 15px; cursor: pointer; }
+  .sonido button.mudo { background: rgba(255,255,255,.12); color: var(--muted); }
+  .sonido input { flex: 1; max-width: 220px; accent-color: var(--pink); }
+  .sonido span { color: var(--muted); font-size: 12px; font-weight: 600; }
+  .marco { position: relative; }
+  .tablero { display: grid; grid-template-columns: repeat(9, 1fr); width: 100%; aspect-ratio: 1; border: 2px solid var(--blue); border-radius: 12px; overflow: hidden; background: #071222; box-shadow: 0 0 20px rgba(79,195,255,.18); user-select: none; -webkit-user-select: none; }
+  .c { position: relative; display: grid; place-items: center; border-right: 1px solid rgba(79,195,255,.15); border-bottom: 1px solid rgba(79,195,255,.15); font-size: clamp(16px, 5.4vw, 24px); font-weight: 700; cursor: pointer; color: var(--blue); transition: background .12s; -webkit-tap-highlight-color: transparent; }
+  .c:nth-child(9n) { border-right: 0; }
+  .c:nth-child(n+73) { border-bottom: 0; }
+  .c.bd { border-right: 2px solid rgba(79,195,255,.6); }
+  .c.bb { border-bottom: 2px solid rgba(79,195,255,.6); }
+  .c.fija { color: var(--text); cursor: pointer; }
+  .c.zona { background: rgba(79,195,255,.07); }
+  .c.igual { background: rgba(139,92,246,.28); }
+  .c.sel { background: rgba(214,59,176,.35); box-shadow: inset 0 0 0 2px var(--pink); }
+  .c.mal { color: #ff5f7e; background: rgba(255,60,100,.16); }
+  .c.pista { color: var(--pink); }
+  .c.brilla { animation: brillo .5s ease-out; }
+  @keyframes brillo { 0% { background: rgba(79,195,255,.55); } 100% { background: transparent; } }
+  .notas { position: absolute; inset: 1px; display: grid; grid-template-columns: repeat(3, 1fr); font-size: clamp(7px, 2vw, 10px); font-weight: 600; color: var(--muted); line-height: 1; }
+  .notas i { font-style: normal; display: grid; place-items: center; }
+  .acciones { display: flex; gap: 6px; margin: 12px 0 8px; }
+  .acciones .btn { font-size: 13px; padding: 9px 0; }
+  .btn.activo { background: rgba(214,59,176,.25); border-color: var(--pink); }
+  .numeros { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; }
+  .numeros button { aspect-ratio: .8; border-radius: 10px; border: 1px solid rgba(79,195,255,.3); background: rgba(79,195,255,.1); color: var(--blue); font: inherit; font-size: clamp(17px, 5vw, 22px); font-weight: 800; cursor: pointer; padding: 0; position: relative; }
+  .numeros button small { position: absolute; bottom: 3px; left: 0; right: 0; font-size: 9px; color: var(--muted); font-weight: 600; }
+  .numeros button.lleno { opacity: .3; }
+  .cartel { position: absolute; inset: 0; border-radius: 12px; background: rgba(2,7,18,.84); display: grid; place-content: center; text-align: center; gap: 6px; }
+  .cartel[hidden] { display: none; }
+  .cartel h2 { margin: 0; font-size: 32px; font-weight: 800; text-shadow: 0 0 18px rgba(214,59,176,.8); }
+  .cartel p { margin: 0 0 10px; color: var(--muted); }
+  .cartel .btn { flex: none; padding: 10px 20px; }
+  .ayuda { text-align: center; color: var(--muted); font-size: 12px; margin-top: 10px; }
+  /* Dentro de la ventana de juegos del portfolio: sin marco propio */
+  html.embed body { padding: 0; min-height: 0; display: block; background: transparent; }
+  html.embed .juego { width: 100%; border: 0; box-shadow: none; padding: 0; background: transparent; }
+  html.embed .arriba h1 { display: none; }
+  html.embed .datos { margin-left: 0; width: 100%; }
+  html.embed .dato { flex: 1; }
+</style>
+<script>
+// Si el juego está metido dentro del portfolio, avisa su alto y escucha la pausa
+window.juegoPausado = false;
+if (window.self !== window.top) {
+  document.documentElement.classList.add('embed');
+  addEventListener('message', e => { if (e.data && 'juegoPausa' in e.data) window.juegoPausado = !!e.data.juegoPausa; });
+  addEventListener('keydown', e => { if (e.key === 'Escape') parent.postMessage({ juegoCerrar: true }, '*'); });
+  addEventListener('load', () => {
+    const avisar = () => parent.postMessage({ juegoAlto: document.documentElement.scrollHeight, juego: location.pathname.split('/').pop() }, '*');
+    new ResizeObserver(avisar).observe(document.body); avisar();
+  });
+}
+</script>
+</head>
+<body>
+<div class="juego">
+  <div class="arriba">
+    <h1>Sudoku</h1>
+    <div class="datos">
+      <div class="dato"><small>Tiempo</small><b id="tiempo">0:00</b></div>
+      <div class="dato"><small>Errores</small><b id="errores">0/3</b></div>
+      <div class="dato"><small>Récord</small><b id="record">—</b></div>
+    </div>
+  </div>
+  <div class="dificultad">
+    <button class="btn" data-dif="facil">Fácil</button>
+    <button class="btn" data-dif="medio">Medio</button>
+    <button class="btn" data-dif="dificil">Difícil</button>
+  </div>
+  <div class="sonido">
+    <button id="mudo" aria-label="Silenciar">🔊</button>
+    <input type="range" id="vol" min="0" max="100" aria-label="Volumen">
+    <span>Sonido</span>
+  </div>
+  <div class="marco">
+    <div class="tablero" id="tablero"></div>
+    <div class="cartel" id="cartel" hidden></div>
+  </div>
+  <div class="acciones">
+    <button class="btn" id="borrar">⌫ Borrar</button>
+    <button class="btn" id="notas">✎ Notas</button>
+    <button class="btn" id="pista">💡 Pista <span id="pistas">(3)</span></button>
+    <button class="btn" id="nuevo">↻ Nuevo</button>
+  </div>
+  <div class="numeros" id="numeros"></div>
+  <div class="ayuda">Tocá una casilla y después un número · Con teclado: flechas, 1-9, Borrar y N para notas</div>
+</div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const elTab = $('tablero'), elNum = $('numeros'), elCartel = $('cartel');
+
+  // ---------- Guardado (solo en este navegador) ----------
+  function leer(k, def) { try { const v = localStorage.getItem(k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } }
+  function guardar(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  // ---------- Sonido (Web Audio, sin archivos) ----------
+  const conf = leer('sonido-sudoku', { vol: 0.6, mudo: false });
+  let ctx = null, salida = null;
+  function audio() {
+    if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; ctx = new AC(); salida = ctx.createGain(); salida.connect(ctx.destination); }
+    if (ctx.state === 'suspended') ctx.resume();
+    salida.gain.value = conf.mudo ? 0 : conf.vol;
+    return ctx;
+  }
+  function tono(f, dur, o = {}) {
+    if (conf.mudo || conf.vol <= 0 || !audio()) return;
+    const t = ctx.currentTime + (o.retraso || 0), osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = o.tipo || 'triangle'; osc.frequency.setValueAtTime(f, t);
+    if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || 0.2, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g); g.connect(salida); osc.start(t); osc.stop(t + dur + 0.02);
+  }
+  const ESCALA = [262, 294, 330, 349, 392, 440, 494, 523, 587];
+  const sonido = {
+    elegir: () => tono(700, 0.03, { tipo: 'sine', vol: 0.06 }),
+    poner: n => tono(ESCALA[n - 1], 0.12, { vol: 0.18 }),
+    nota: () => tono(900, 0.04, { tipo: 'sine', vol: 0.07 }),
+    borrar: () => tono(300, 0.08, { f2: 200, vol: 0.1 }),
+    error: () => { tono(180, 0.25, { tipo: 'sawtooth', vol: 0.12 }); tono(170, 0.25, { tipo: 'square', vol: 0.06 }); },
+    grupo: () => [659, 784, 988].forEach((f, i) => tono(f, 0.12, { retraso: i * 0.06, vol: 0.14, tipo: 'sine' })),
+    pista: () => [880, 1175].forEach((f, i) => tono(f, 0.14, { retraso: i * 0.07, vol: 0.14, tipo: 'sine' })),
+    ganar: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tono(f, 0.22, { retraso: i * 0.1, vol: 0.18 })),
+    perder: () => [392, 330, 262, 196].forEach((f, i) => tono(f, 0.25, { retraso: i * 0.15, vol: 0.16 })),
+    empezar: () => [392, 523, 659].forEach((f, i) => tono(f, 0.12, { retraso: i * 0.07, vol: 0.14 }))
+  };
+  const btnMudo = $('mudo'), inVol = $('vol');
+  function mostrarSonido() {
+    const apagado = conf.mudo || conf.vol <= 0;
+    inVol.value = Math.round(conf.vol * 100);
+    btnMudo.textContent = apagado ? '🔇' : conf.vol < 0.4 ? '🔉' : '🔊';
+    btnMudo.classList.toggle('mudo', apagado);
+    if (salida) salida.gain.value = apagado ? 0 : conf.vol;
+  }
+  btnMudo.addEventListener('click', () => {
+    if (conf.mudo || conf.vol <= 0) { conf.mudo = false; if (conf.vol <= 0) conf.vol = 0.6; } else conf.mudo = true;
+    guardar('sonido-sudoku', conf); mostrarSonido(); btnMudo.blur(); sonido.poner(5);
+  });
+  inVol.addEventListener('input', () => { conf.vol = inVol.value / 100; conf.mudo = false; guardar('sonido-sudoku', conf); mostrarSonido(); });
+  inVol.addEventListener('change', () => { sonido.poner(5); inVol.blur(); });
+  mostrarSonido();
+
+  // ---------- Generador: arma un tablero completo y le saca números dejando UNA sola solución ----------
+  function mezclar(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function puede(g, i, n) {
+    const f = Math.floor(i / 9), c = i % 9, bf = f - f % 3, bc = c - c % 3;
+    for (let k = 0; k < 9; k++) {
+      if (g[f * 9 + k] === n || g[k * 9 + c] === n) return false;
+      if (g[(bf + Math.floor(k / 3)) * 9 + bc + k % 3] === n) return false;
+    }
+    return true;
+  }
+  function llenar(g) {
+    const i = g.indexOf(0); if (i < 0) return true;
+    for (const n of mezclar([1, 2, 3, 4, 5, 6, 7, 8, 9])) { if (puede(g, i, n)) { g[i] = n; if (llenar(g)) return true; g[i] = 0; } }
+    return false;
+  }
+  // Cuenta soluciones (corta en 2): elige siempre la casilla con menos opciones
+  function contar(g, tope = 2) {
+    let mejor = -1, opciones = null;
+    for (let i = 0; i < 81; i++) {
+      if (g[i]) continue;
+      const op = []; for (let n = 1; n <= 9; n++) if (puede(g, i, n)) op.push(n);
+      if (!op.length) return 0;
+      if (!opciones || op.length < opciones.length) { mejor = i; opciones = op; if (op.length === 1) break; }
+    }
+    if (mejor < 0) return 1;
+    let total = 0;
+    for (const n of opciones) { g[mejor] = n; total += contar(g, tope - total); if (total >= tope) break; }
+    g[mejor] = 0; return total;
+  }
+  const PISTAS_INICIALES = { facil: 40, medio: 32, dificil: 26 };
+  function generar(dif) {
+    const sol = Array(81).fill(0); llenar(sol);
+    const tab = sol.slice(), meta = PISTAS_INICIALES[dif];
+    let quedan = 81;
+    for (const i of mezclar([...Array(81).keys()])) {
+      if (quedan <= meta) break;
+      const v = tab[i]; tab[i] = 0;
+      if (contar(tab.slice()) !== 1) tab[i] = v; else quedan--;
+    }
+    return { sol, tab };
+  }
+
+  // ---------- Estado ----------
+  let dif = leer('sudoku-dif', 'medio'), sol, inicial, valores, notas, sel = -1, modoNotas = false, errores = 0, pistas = 3, segundos = 0, terminado = false, reloj = null;
+  const MAX_ERRORES = 3;
+  const records = leer('sudoku-records', {});
+
+  // ---------- Armado de la grilla ----------
+  const celdas = [];
+  for (let i = 0; i < 81; i++) {
+    const d = document.createElement('div'); d.className = 'c';
+    const f = Math.floor(i / 9), c = i % 9;
+    if (c === 2 || c === 5) d.classList.add('bd');
+    if (f === 2 || f === 5) d.classList.add('bb');
+    d.addEventListener('pointerdown', e => { e.preventDefault(); elegir(i); });
+    elTab.appendChild(d); celdas.push(d);
+  }
+  const botonesNum = [];
+  for (let n = 1; n <= 9; n++) {
+    const b = document.createElement('button'); b.innerHTML = n + '<small></small>';
+    b.addEventListener('click', () => { b.blur(); poner(n); });
+    elNum.appendChild(b); botonesNum.push(b);
+  }
+
+  function empezar(nuevaDif) {
+    if (nuevaDif) { dif = nuevaDif; guardar('sudoku-dif', dif); }
+    const p = generar(dif);
+    sol = p.sol; inicial = p.tab.map(v => v > 0); valores = p.tab.slice(); notas = Array.from({ length: 81 }, () => []);
+    sel = -1; errores = 0; pistas = 3; segundos = 0; terminado = false; elCartel.hidden = true;
+    celdas.forEach(d => d.classList.remove('pista'));
+    arrancarReloj(); dibujar(); sonido.empezar(); guardarPartida();
+  }
+  function arrancarReloj() { clearInterval(reloj); reloj = setInterval(() => { if (!terminado && !document.hidden && !window.juegoPausado) { segundos++; $('tiempo').textContent = formato(segundos); if (segundos % 5 === 0) guardarPartida(); } }, 1000); }
+  const formato = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+
+  // ---------- Dibujo ----------
+  function dibujar() {
+    const vSel = sel >= 0 ? valores[sel] : 0, fS = Math.floor(sel / 9), cS = sel % 9;
+    for (let i = 0; i < 81; i++) {
+      const d = celdas[i], v = valores[i], f = Math.floor(i / 9), c = i % 9;
+      const zona = sel >= 0 && (f === fS || c === cS || (Math.floor(f / 3) === Math.floor(fS / 3) && Math.floor(c / 3) === Math.floor(cS / 3)));
+      d.classList.toggle('fija', inicial[i]);
+      d.classList.toggle('sel', i === sel);
+      d.classList.toggle('zona', zona && i !== sel);
+      d.classList.toggle('igual', !!vSel && v === vSel && i !== sel);
+      d.classList.toggle('mal', !!v && !inicial[i] && v !== sol[i]);
+      if (v) d.textContent = v;
+      else if (notas[i].length) d.innerHTML = '<div class="notas">' + [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<i>${notas[i].includes(n) ? n : ''}</i>`).join('') + '</div>';
+      else d.textContent = '';
+    }
+    // cuántos quedan de cada número
+    const cuenta = Array(10).fill(0); valores.forEach((v, i) => { if (v && v === sol[i]) cuenta[v]++; });
+    botonesNum.forEach((b, k) => { const resta = 9 - cuenta[k + 1]; b.classList.toggle('lleno', resta <= 0); b.querySelector('small').textContent = resta > 0 ? resta : ''; });
+    $('errores').textContent = errores + '/' + MAX_ERRORES;
+    $('tiempo').textContent = formato(segundos);
+    $('pistas').textContent = '(' + pistas + ')';
+    $('notas').classList.toggle('activo', modoNotas);
+    $('record').textContent = records[dif] ? formato(records[dif]) : '—';
+    document.querySelectorAll('[data-dif]').forEach(b => b.classList.toggle('on', b.dataset.dif === dif));
+  }
+
+  // ---------- Jugadas ----------
+  function elegir(i) { if (terminado) return; sel = i; audio(); sonido.elegir(); dibujar(); }
+  function grupos(i) {
+    const f = Math.floor(i / 9), c = i % 9, bf = f - f % 3, bc = c - c % 3, g = [[], [], []];
+    for (let k = 0; k < 9; k++) { g[0].push(f * 9 + k); g[1].push(k * 9 + c); g[2].push((bf + Math.floor(k / 3)) * 9 + bc + k % 3); }
+    return g;
+  }
+  function poner(n) {
+    if (terminado || sel < 0 || inicial[sel]) return;
+    audio();
+    if (modoNotas) {
+      if (valores[sel]) return;
+      const l = notas[sel], k = l.indexOf(n); if (k >= 0) l.splice(k, 1); else l.push(n);
+      sonido.nota(); dibujar(); guardarPartida(); return;
+    }
+    if (valores[sel] === n) return;
+    valores[sel] = n; notas[sel] = [];
+    if (n !== sol[sel]) {
+      errores++; sonido.error();
+      if (errores >= MAX_ERRORES) { dibujar(); perder(); return; }
+    } else {
+      // limpiar esa nota en su fila, columna y cuadro
+      grupos(sel).flat().forEach(j => { const k = notas[j].indexOf(n); if (k >= 0) notas[j].splice(k, 1); });
+      const completos = grupos(sel).filter(g => g.every(j => valores[j] === sol[j]));
+      if (completos.length) { sonido.grupo(); completos.flat().forEach(j => { celdas[j].classList.remove('brilla'); void celdas[j].offsetWidth; celdas[j].classList.add('brilla'); }); }
+      else sonido.poner(n);
+    }
+    dibujar(); guardarPartida();
+    if (valores.every((v, i) => v === sol[i])) ganar();
+  }
+  function borrar() {
+    if (terminado || sel < 0 || inicial[sel]) return;
+    if (!valores[sel] && !notas[sel].length) return;
+    valores[sel] = 0; notas[sel] = []; audio(); sonido.borrar(); dibujar(); guardarPartida();
+  }
+  function darPista() {
+    if (terminado || pistas <= 0) return;
+    let i = sel >= 0 && !inicial[sel] && valores[sel] !== sol[sel] ? sel : -1;
+    if (i < 0) { const vacias = []; valores.forEach((v, k) => { if (v !== sol[k]) vacias.push(k); }); if (!vacias.length) return; i = vacias[Math.floor(Math.random() * vacias.length)]; }
+    pistas--; sel = i; valores[i] = sol[i]; inicial[i] = true; notas[i] = [];
+    grupos(i).flat().forEach(j => { const k = notas[j].indexOf(sol[i]); if (k >= 0) notas[j].splice(k, 1); });
+    audio(); sonido.pista(); dibujar(); celdas[i].classList.add('pista'); guardarPartida();
+    if (valores.every((v, k) => v === sol[k])) ganar();
+  }
+  function ganar() {
+    terminado = true; sel = -1; dibujar(); sonido.ganar();
+    const nuevoRecord = !records[dif] || segundos < records[dif];
+    if (nuevoRecord) { records[dif] = segundos; guardar('sudoku-records', records); }
+    cartel('¡Resuelto!', `Tiempo: ${formato(segundos)}${nuevoRecord ? ' · ¡Nuevo récord!' : ''}`);
+    guardar('sudoku-partida', null);
+  }
+  function perder() { terminado = true; sonido.perder(); cartel('Tres errores', 'Se terminó la partida. ¿Otra?'); guardar('sudoku-partida', null); }
+  function cartel(t, p) {
+    elCartel.innerHTML = `<h2>${t}</h2><p>${p}</p><button class="btn main">Nuevo sudoku</button>`;
+    elCartel.hidden = false; elCartel.querySelector('button').onclick = () => empezar();
+  }
+
+  // La partida queda guardada si cerrás y volvés a abrir
+  function guardarPartida() { if (!terminado) guardar('sudoku-partida', { dif, sol, inicial, valores, notas, errores, pistas, segundos }); }
+  function cargarPartida() {
+    const p = leer('sudoku-partida', null); if (!p || !p.sol) return false;
+    ({ dif, sol, inicial, valores, notas, errores, pistas, segundos } = p);
+    arrancarReloj(); dibujar(); return true;
+  }
+
+  // ---------- Controles ----------
+  $('borrar').addEventListener('click', e => { e.currentTarget.blur(); borrar(); });
+  $('notas').addEventListener('click', e => { e.currentTarget.blur(); modoNotas = !modoNotas; audio(); sonido.nota(); dibujar(); });
+  $('pista').addEventListener('click', e => { e.currentTarget.blur(); darPista(); });
+  $('nuevo').addEventListener('click', e => { e.currentTarget.blur(); empezar(); });
+  document.querySelectorAll('[data-dif]').forEach(b => b.addEventListener('click', () => { b.blur(); empezar(b.dataset.dif); }));
+  document.addEventListener('keydown', e => {
+    if (e.target === inVol || terminado) return;
+    if (/^[1-9]$/.test(e.key)) { poner(+e.key); return; }
+    if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') { e.preventDefault(); borrar(); return; }
+    if (e.key === 'n' || e.key === 'N') { modoNotas = !modoNotas; dibujar(); return; }
+    const mov = { ArrowUp: -9, ArrowDown: 9, ArrowLeft: -1, ArrowRight: 1 }[e.key];
+    if (mov) {
+      e.preventDefault();
+      if (sel < 0) { elegir(40); return; }
+      const f = Math.floor(sel / 9), c = sel % 9;
+      if ((mov === -1 && c === 0) || (mov === 1 && c === 8) || (mov === -9 && f === 0) || (mov === 9 && f === 8)) return;
+      elegir(sel + mov);
+    }
+  });
+
+  if (!cargarPartida()) empezar();
+})();
+</script>
+</body>
+</html>

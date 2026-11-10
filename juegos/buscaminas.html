@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Buscaminas | Cristian Sabella</title>
+<style>
+  :root {
+    --bg: #020712; --panel: #050b14; --line: rgba(79,195,255,.25);
+    --blue: #4fc3ff; --pink: #d63bb0; --violeta: #8b5cf6; --text: #e6f4ff; --muted: #8fa9c4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, sans-serif; display: grid; place-items: center; padding: 16px; }
+  .juego { width: min(480px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .arriba { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  h1 { margin: 0; font-size: clamp(19px, 5.4vw, 26px); font-weight: 800; background: linear-gradient(135deg, var(--blue), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .datos { margin-left: auto; display: flex; gap: 8px; }
+  .dato { background: #071222; border: 1px solid var(--line); border-radius: 10px; padding: 5px 8px; text-align: center; min-width: 52px; }
+  .juego { min-width: 0; }
+  @media (max-width: 420px) { body { padding: 8px; } .juego { padding: 12px; } .datos { gap: 5px; } .dato b { font-size: 15px; } }
+  .dato small { display: block; color: var(--muted); font-size: 11px; font-weight: 600; }
+  .dato b { font-size: 17px; }
+  .fila { display: flex; gap: 6px; margin-bottom: 12px; }
+  .btn { flex: 1; padding: 10px 0; border-radius: 12px; border: 1px solid rgba(79,195,255,.3); background: rgba(79,195,255,.08); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+  .btn.on, .btn.main { background: linear-gradient(135deg, var(--blue), var(--pink)); border-color: transparent; color: #fff; }
+  .sonido { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 6px 12px 6px 6px; border-radius: 12px; background: rgba(214,59,176,.07); border: 1px solid rgba(214,59,176,.3); }
+  .sonido button { width: 34px; height: 34px; flex: none; border-radius: 50%; border: 0; background: var(--pink); color: #fff; font-size: 15px; cursor: pointer; }
+  .sonido button.mudo { background: rgba(255,255,255,.12); color: var(--muted); }
+  .sonido input { flex: 1; max-width: 220px; accent-color: var(--pink); }
+  .sonido span { color: var(--muted); font-size: 12px; font-weight: 600; }
+  .modo { display: flex; gap: 6px; margin-bottom: 12px; }
+  .modo .btn { font-size: 14px; }
+  .modo .btn.activo { background: rgba(214,59,176,.25); border-color: var(--pink); }
+  .marco { position: relative; }
+  .tablero { display: grid; gap: 3px; width: 100%; aspect-ratio: 1; padding: 6px; background: #071222; border: 1px solid var(--line); border-radius: 12px; user-select: none; -webkit-user-select: none; touch-action: manipulation; -webkit-touch-callout: none; }
+  .c { min-width: 0; min-height: 0; overflow: hidden; line-height: 1; border-radius: 5px; display: grid; place-items: center; font-weight: 800; font-size: var(--letra); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .c.tapada { background: linear-gradient(145deg, #173252, #0f2238); box-shadow: inset 0 1px 0 rgba(79,195,255,.25), 0 0 0 1px rgba(79,195,255,.12); }
+  .c.tapada:hover { background: linear-gradient(145deg, #1d3e64, #132a45); }
+  .c.abierta { background: #0a1626; cursor: default; }
+  .c.abierta.aparece { animation: abrir .2s ease-out; }
+  @keyframes abrir { from { transform: scale(.6); opacity: .3; } to { transform: scale(1); opacity: 1; } }
+  .c.bandera { color: var(--pink); }
+  .c.mina { background: rgba(214,59,176,.18); }
+  .c.boom { background: #d63bb0; box-shadow: 0 0 18px #d63bb0; }
+  .c.malpuesta { background: rgba(255,95,126,.2); text-decoration: line-through; }
+  .cartel { position: absolute; inset: 0; border-radius: 12px; background: rgba(2,7,18,.82); display: grid; place-content: center; text-align: center; gap: 6px; }
+  .cartel[hidden] { display: none; }
+  .cartel h2 { margin: 0; font-size: 32px; font-weight: 800; text-shadow: 0 0 18px rgba(214,59,176,.8); }
+  .cartel p { margin: 0 0 10px; color: var(--muted); }
+  .cartel .btn { flex: none; padding: 10px 20px; }
+  .ayuda { text-align: center; color: var(--muted); font-size: 12px; margin-top: 10px; }
+  /* Dentro de la ventana de juegos del portfolio: sin marco propio */
+  html.embed body { padding: 0; min-height: 0; display: block; background: transparent; }
+  html.embed .juego { width: 100%; border: 0; box-shadow: none; padding: 0; background: transparent; }
+  html.embed .arriba h1 { display: none; }
+  html.embed .datos { margin-left: 0; width: 100%; }
+  html.embed .dato { flex: 1; }
+</style>
+<script>
+// Si el juego está metido dentro del portfolio, avisa su alto y escucha la pausa
+window.juegoPausado = false;
+if (window.self !== window.top) {
+  document.documentElement.classList.add('embed');
+  addEventListener('message', e => { if (e.data && 'juegoPausa' in e.data) window.juegoPausado = !!e.data.juegoPausa; });
+  addEventListener('keydown', e => { if (e.key === 'Escape') parent.postMessage({ juegoCerrar: true }, '*'); });
+  addEventListener('load', () => {
+    const avisar = () => parent.postMessage({ juegoAlto: document.documentElement.scrollHeight, juego: location.pathname.split('/').pop() }, '*');
+    new ResizeObserver(avisar).observe(document.body); avisar();
+  });
+}
+</script>
+</head>
+<body>
+<div class="juego">
+  <div class="arriba">
+    <h1>Buscaminas</h1>
+    <div class="datos">
+      <div class="dato"><small>Minas</small><b id="minas">10</b></div>
+      <div class="dato"><small>Tiempo</small><b id="tiempo">0:00</b></div>
+      <div class="dato"><small>Récord</small><b id="record">—</b></div>
+    </div>
+  </div>
+  <div class="fila">
+    <button class="btn" data-dif="facil">Fácil</button>
+    <button class="btn" data-dif="medio">Medio</button>
+    <button class="btn" data-dif="dificil">Difícil</button>
+  </div>
+  <div class="sonido">
+    <button id="mudo" aria-label="Silenciar">🔊</button>
+    <input type="range" id="vol" min="0" max="100" aria-label="Volumen">
+    <span>Sonido</span>
+  </div>
+  <div class="modo">
+    <button class="btn activo" id="m-abrir">⛏ Destapar</button>
+    <button class="btn" id="m-bandera">🚩 Bandera</button>
+    <button class="btn" id="nuevo" style="flex:.6">↻</button>
+  </div>
+  <div class="marco">
+    <div class="tablero" id="tablero"></div>
+    <div class="cartel" id="cartel" hidden></div>
+  </div>
+  <div class="ayuda">Clic para destapar · clic derecho para bandera · clic en un número para destapar alrededor<br>En el celular: mantené apretado para poner bandera, o usá el botón 🚩</div>
+</div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const elTab = $('tablero'), elCartel = $('cartel');
+  const DIFS = { facil: { n: 9, minas: 10 }, medio: { n: 12, minas: 24 }, dificil: { n: 14, minas: 40 } };
+  // Colores de los números, siguiendo la paleta de la web
+  const COLOR_NUM = ['', '#4fc3ff', '#3ddc84', '#d63bb0', '#8b5cf6', '#ff8a4c', '#2fd9d0', '#ffd23f', '#e6f4ff'];
+
+  // ---------- Guardado (solo en este navegador) ----------
+  function leer(k, def) { try { const v = localStorage.getItem(k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } }
+  function guardar(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  // ---------- Sonido (Web Audio, sin archivos) ----------
+  const conf = leer('sonido-buscaminas', { vol: 0.6, mudo: false });
+  let ctx = null, salida = null, ruidoBuf = null;
+  function audio() {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+      ctx = new AC(); salida = ctx.createGain(); salida.connect(ctx.destination);
+      ruidoBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = ruidoBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    salida.gain.value = conf.mudo ? 0 : conf.vol;
+    return ctx;
+  }
+  const activo = () => !conf.mudo && conf.vol > 0 && audio();
+  function tono(f, dur, o = {}) {
+    if (!activo()) return;
+    const t = ctx.currentTime + (o.retraso || 0), osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = o.tipo || 'triangle'; osc.frequency.setValueAtTime(f, t);
+    if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || 0.2, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g); g.connect(salida); osc.start(t); osc.stop(t + dur + 0.02);
+  }
+  function ruido(dur, o = {}) {
+    if (!activo()) return;
+    const t = ctx.currentTime + (o.retraso || 0), src = ctx.createBufferSource(), fil = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = ruidoBuf; fil.type = 'lowpass'; fil.frequency.setValueAtTime(o.f || 2000, t); if (o.f2) fil.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+    g.gain.setValueAtTime(o.vol || 0.3, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(fil); fil.connect(g); g.connect(salida); src.start(t); src.stop(t + dur + 0.02);
+  }
+  const sonido = {
+    abrir: n => tono(500 + n * 60, 0.06, { tipo: 'sine', vol: 0.12 }),
+    cascada: cant => { for (let i = 0; i < Math.min(6, 2 + Math.floor(cant / 8)); i++) tono(500 + i * 90, 0.06, { tipo: 'sine', vol: 0.09, retraso: i * 0.035 }); },
+    bandera: () => tono(880, 0.07, { f2: 1200, tipo: 'square', vol: 0.07 }),
+    sacar: () => tono(700, 0.06, { f2: 450, tipo: 'square', vol: 0.06 }),
+    boom: () => { ruido(0.8, { f: 2500, f2: 60, vol: 0.5 }); tono(160, 0.6, { f2: 40, tipo: 'sawtooth', vol: 0.25 }); },
+    ganar: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tono(f, 0.22, { retraso: i * 0.1, vol: 0.18 })),
+    empezar: () => [392, 523, 659].forEach((f, i) => tono(f, 0.12, { retraso: i * 0.07, vol: 0.14 }))
+  };
+  const btnMudo = $('mudo'), inVol = $('vol');
+  function mostrarSonido() {
+    const apagado = conf.mudo || conf.vol <= 0;
+    inVol.value = Math.round(conf.vol * 100);
+    btnMudo.textContent = apagado ? '🔇' : conf.vol < 0.4 ? '🔉' : '🔊';
+    btnMudo.classList.toggle('mudo', apagado);
+    if (salida) salida.gain.value = apagado ? 0 : conf.vol;
+  }
+  btnMudo.addEventListener('click', () => {
+    if (conf.mudo || conf.vol <= 0) { conf.mudo = false; if (conf.vol <= 0) conf.vol = 0.6; } else conf.mudo = true;
+    guardar('sonido-buscaminas', conf); mostrarSonido(); btnMudo.blur(); sonido.bandera();
+  });
+  inVol.addEventListener('input', () => { conf.vol = inVol.value / 100; conf.mudo = false; guardar('sonido-buscaminas', conf); mostrarSonido(); });
+  inVol.addEventListener('change', () => { sonido.abrir(3); inVol.blur(); });
+  mostrarSonido();
+
+  // ---------- Estado ----------
+  let dif = leer('buscaminas-dif', 'facil'), N, MINAS, minas, abiertas, banderas, cerca, celdas = [];
+  let primera = true, terminado = false, segundos = 0, reloj = null, modoBandera = false;
+  const records = leer('buscaminas-records', {});
+  const formato = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+
+  function vecinos(i) {
+    const f = Math.floor(i / N), c = i % N, r = [];
+    for (let df = -1; df <= 1; df++) for (let dc = -1; dc <= 1; dc++) {
+      if (!df && !dc) continue;
+      const nf = f + df, nc = c + dc;
+      if (nf >= 0 && nc >= 0 && nf < N && nc < N) r.push(nf * N + nc);
+    }
+    return r;
+  }
+
+  function empezar(nuevaDif) {
+    if (nuevaDif) { dif = nuevaDif; guardar('buscaminas-dif', dif); }
+    N = DIFS[dif].n; MINAS = DIFS[dif].minas;
+    minas = Array(N * N).fill(false); abiertas = Array(N * N).fill(false); banderas = Array(N * N).fill(false); cerca = Array(N * N).fill(0);
+    primera = true; terminado = false; segundos = 0; clearInterval(reloj); reloj = null; elCartel.hidden = true;
+    elTab.style.gridTemplateColumns = elTab.style.gridTemplateRows = `repeat(${N}, minmax(0, 1fr))`;
+    elTab.innerHTML = ''; celdas = [];
+    for (let i = 0; i < N * N; i++) {
+      const d = document.createElement('div'); d.className = 'c tapada';
+      elTab.appendChild(d); celdas.push(d); conectar(d, i);
+    }
+    medir(); actualizarDatos();
+    document.querySelectorAll('[data-dif]').forEach(b => b.classList.toggle('on', b.dataset.dif === dif));
+  }
+  function medir() { elTab.style.setProperty('--letra', Math.max(11, (elTab.clientWidth - 12) / N * 0.55) + 'px'); }
+
+  // Las minas se ponen recién en el primer toque, así nunca perdés de entrada
+  function sembrar(seguro) {
+    const prohibido = new Set([seguro, ...vecinos(seguro)]);
+    const lugares = []; for (let i = 0; i < N * N; i++) if (!prohibido.has(i)) lugares.push(i);
+    for (let k = 0; k < MINAS; k++) { const j = k + Math.floor(Math.random() * (lugares.length - k)); [lugares[k], lugares[j]] = [lugares[j], lugares[k]]; minas[lugares[k]] = true; }
+    for (let i = 0; i < N * N; i++) cerca[i] = vecinos(i).filter(v => minas[v]).length;
+    reloj = setInterval(() => { if (!terminado && !document.hidden && !window.juegoPausado) { segundos++; $('tiempo').textContent = formato(segundos); } }, 1000);
+  }
+
+  // ---------- Jugadas ----------
+  function destapar(i) {
+    if (terminado || banderas[i]) return;
+    if (abiertas[i]) { acorde(i); return; }
+    if (primera) { primera = false; sembrar(i); }
+    if (minas[i]) { explotar(i); return; }
+    const abiertasAhora = abrirDesde(i);
+    if (abiertasAhora > 1) sonido.cascada(abiertasAhora); else sonido.abrir(cerca[i]);
+    revisarVictoria();
+  }
+  // Abre la casilla y, si no tiene minas alrededor, se expande sola
+  function abrirDesde(i) {
+    const pila = [i]; let cant = 0;
+    while (pila.length) {
+      const k = pila.pop();
+      if (abiertas[k] || banderas[k]) continue;
+      abiertas[k] = true; cant++; pintar(k, true);
+      if (cerca[k] === 0) vecinos(k).forEach(v => { if (!abiertas[v] && !minas[v]) pila.push(v); });
+    }
+    return cant;
+  }
+  // Tocar un número con todas sus banderas puestas destapa lo que queda alrededor
+  function acorde(i) {
+    if (!cerca[i]) return;
+    const vs = vecinos(i), puestas = vs.filter(v => banderas[v]).length;
+    if (puestas !== cerca[i]) return;
+    let total = 0;
+    for (const v of vs) {
+      if (abiertas[v] || banderas[v]) continue;
+      if (minas[v]) { explotar(v); return; }
+      total += abrirDesde(v);
+    }
+    if (total) { sonido.cascada(total); revisarVictoria(); }
+  }
+  function marcar(i) {
+    if (terminado || abiertas[i] || primera) return;
+    banderas[i] = !banderas[i];
+    banderas[i] ? sonido.bandera() : sonido.sacar();
+    if (navigator.vibrate) navigator.vibrate(25);
+    pintar(i); actualizarDatos();
+  }
+  function explotar(i) {
+    terminado = true; clearInterval(reloj); sonido.boom();
+    if (navigator.vibrate) navigator.vibrate([80, 40, 120]);
+    celdas[i].classList.add('boom');
+    // se van mostrando las minas una por una
+    const resto = []; for (let k = 0; k < N * N; k++) { if (minas[k] && k !== i && !banderas[k]) resto.push(k); if (banderas[k] && !minas[k]) celdas[k].classList.add('malpuesta'); }
+    pintar(i, false, true);
+    resto.sort((a, b) => dist(a, i) - dist(b, i)).forEach((k, n) => setTimeout(() => pintar(k, false, true), 40 + n * 25));
+    setTimeout(() => cartel('¡Boom!', 'Pisaste una mina. ¿Otra partida?'), 500 + resto.length * 25);
+  }
+  const dist = (a, b) => Math.hypot(Math.floor(a / N) - Math.floor(b / N), a % N - b % N);
+  function revisarVictoria() {
+    const libres = N * N - MINAS; if (abiertas.filter(Boolean).length !== libres) return;
+    terminado = true; clearInterval(reloj);
+    for (let k = 0; k < N * N; k++) if (minas[k] && !banderas[k]) { banderas[k] = true; pintar(k); }
+    actualizarDatos(); sonido.ganar();
+    const nuevo = !records[dif] || segundos < records[dif];
+    if (nuevo) { records[dif] = segundos; guardar('buscaminas-records', records); actualizarDatos(); }
+    setTimeout(() => cartel('¡Ganaste!', `Tiempo: ${formato(segundos)}${nuevo ? ' · ¡Nuevo récord!' : ''}`), 400);
+  }
+  function cartel(t, p) {
+    elCartel.innerHTML = `<h2>${t}</h2><p>${p}</p><button class="btn main">Jugar de nuevo</button>`;
+    elCartel.hidden = false; elCartel.querySelector('button').onclick = () => { empezar(); sonido.empezar(); };
+  }
+
+  // ---------- Dibujo ----------
+  function pintar(i, recien, mostrarMina) {
+    const d = celdas[i];
+    if (mostrarMina) { d.className = 'c abierta mina' + (d.classList.contains('boom') ? ' boom' : ''); d.textContent = '✹'; d.style.color = '#ff6fd8'; return; }
+    if (abiertas[i]) {
+      d.className = 'c abierta' + (recien ? ' aparece' : '');
+      d.textContent = cerca[i] || ''; d.style.color = COLOR_NUM[cerca[i]];
+    } else {
+      d.className = 'c tapada' + (banderas[i] ? ' bandera' : '');
+      d.textContent = banderas[i] ? '⚑' : ''; d.style.color = '';
+    }
+  }
+  function actualizarDatos() {
+    $('minas').textContent = MINAS - banderas.filter(Boolean).length;
+    $('tiempo').textContent = formato(segundos);
+    $('record').textContent = records[dif] ? formato(records[dif]) : '—';
+  }
+
+  // ---------- Controles: clic, clic derecho y mantener apretado ----------
+  function conectar(d, i) {
+    let timer = null, largo = false, x0 = 0, y0 = 0;
+    d.addEventListener('pointerdown', e => {
+      audio();
+      if (e.button === 2) return;
+      largo = false; x0 = e.clientX; y0 = e.clientY;
+      timer = setTimeout(() => { largo = true; marcar(i); }, 380);
+    });
+    d.addEventListener('pointermove', e => { if (timer && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) { clearTimeout(timer); timer = null; } });
+    d.addEventListener('pointerup', e => {
+      if (e.button === 2) return;
+      clearTimeout(timer); timer = null;
+      if (largo) return;
+      if (modoBandera && !abiertas[i]) marcar(i); else destapar(i);
+    });
+    d.addEventListener('pointerleave', () => { clearTimeout(timer); timer = null; });
+    d.addEventListener('contextmenu', e => { e.preventDefault(); if (!largo) marcar(i); });
+  }
+  function ponerModo(b) { modoBandera = b; $('m-abrir').classList.toggle('activo', !b); $('m-bandera').classList.toggle('activo', b); }
+  $('m-abrir').addEventListener('click', e => { e.currentTarget.blur(); ponerModo(false); });
+  $('m-bandera').addEventListener('click', e => { e.currentTarget.blur(); ponerModo(true); });
+  $('nuevo').addEventListener('click', e => { e.currentTarget.blur(); audio(); empezar(); sonido.empezar(); });
+  document.querySelectorAll('[data-dif]').forEach(b => b.addEventListener('click', () => { b.blur(); audio(); empezar(b.dataset.dif); sonido.empezar(); }));
+  window.addEventListener('resize', medir);
+
+  empezar();
+})();
+</script>
+</body>
+</html>

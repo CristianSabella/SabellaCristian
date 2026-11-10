@@ -1,4 +1,5 @@
-// Juegos del portfolio: Stack, Snake y Cascada
+// Juegos del portfolio: Stack, Snake, Cascada, Arena Helada, 2048, Sudoku y Buscaminas
+// (2048, Sudoku y Buscaminas viven en la carpeta juegos/ y se muestran adentro de un iframe)
 // Se dibujan dentro de <div id="juegos-app"></div>.
 // El récord se guarda solo en el navegador de cada persona (sessionStorage):
 // se borra al cerrar la pestaña y nunca se manda a ningún servidor ni a GitHub.
@@ -16,8 +17,9 @@
     #juegos-app{max-width:460px;margin:0 auto}
     .vj.ancha #juegos-app{max-width:none}
     #ventana-juegos .vj.ancha{width:min(1000px,100%)}
-    .j-tabs{display:flex;gap:8px;margin-bottom:14px}
-    .j-tabs button{flex:1;min-width:0;padding:11px 0;border-radius:12px;border:1px solid rgba(79,195,255,.3);background:rgba(79,195,255,.08);color:${TEXTO};font:inherit;font-weight:700;cursor:pointer;transition:background .2s}
+    .j-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+    .j-tabs button{min-width:0;padding:11px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:12px;border:1px solid rgba(79,195,255,.3);background:rgba(79,195,255,.08);color:${TEXTO};font:inherit;font-weight:700;cursor:pointer;transition:background .2s}
+    .j-tabs button[data-j="buscaminas"]{grid-column:span 2}
     .j-tabs button.on{background:linear-gradient(135deg,#4fc3ff,#d63bb0);border-color:transparent;color:#fff}
     .j-caja{background:#050b14;border:1px solid rgba(79,195,255,.25);border-radius:18px;padding:14px;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
     .j-caja[hidden]{display:none}
@@ -36,6 +38,8 @@
     .j-dato small{display:block;color:${GRIS};font-size:11px}
     .j-dato b{font-size:18px;color:${TEXTO}}
     .j-dato canvas{cursor:default}
+    .j-sonido[hidden]{display:none}
+    .j-caja iframe{display:block;width:100%;border:0;background:transparent;min-height:420px}
     .j-sonido{display:flex;align-items:center;gap:10px;margin:-4px 0 12px;padding:6px 12px 6px 6px;border-radius:12px;background:rgba(214,59,176,.07);border:1px solid rgba(214,59,176,.3)}
     .j-sonido button{width:34px;height:34px;flex:none;border-radius:50%;border:0;background:#d63bb0;color:#fff;font-size:14px;cursor:pointer;display:grid;place-items:center}
     .j-sonido button.mudo{background:rgba(255,255,255,.12);color:${GRIS}}
@@ -585,21 +589,53 @@
   }
 
   // =====================================================================
+  // 2048, SUDOKU y BUSCAMINAS: páginas aparte (juegos/*.html) dentro de un iframe.
+  // Traen su propio sonido con silencio y volumen. El iframe se carga recién al abrir la pestaña.
+  // =====================================================================
+  function crearIframe(caja, archivo, titulo) {
+    let fr = null;
+    const base = (document.querySelector('script[src*="juegos.js"]') || {}).src || '';
+    const src = base ? base.replace(/js\/juegos\.js.*$/, 'juegos/' + archivo) : 'juegos/' + archivo;
+    function pausar(p) { if (fr && fr.contentWindow) fr.contentWindow.postMessage({ juegoPausa: p }, '*'); }
+    return {
+      iframe: true, archivo,
+      medir() {
+        if (!fr) { fr = document.createElement('iframe'); fr.src = src; fr.title = titulo; caja.appendChild(fr); fr.addEventListener('load', () => { try { fr.contentWindow.focus(); } catch (e) {} }); }
+        else { try { fr.contentWindow.focus(); } catch (e) {} }
+      },
+      alto(h) { if (fr) fr.style.height = h + 'px'; },
+      pausar, update() {}, dibujar() {}, salir() { pausar(true); }, tecla() { return false; }
+    };
+  }
+
+  // =====================================================================
   // Pestañas y bucle principal
   // =====================================================================
   app.innerHTML =
-    '<div class="j-tabs"><button data-j="stack" class="on">Stack</button><button data-j="snake">Snake</button><button data-j="cascada">Cascada</button><button data-j="arena">Arena</button></div>' +
+    '<div class="j-tabs"><button data-j="stack" class="on">Stack</button><button data-j="snake">Snake</button><button data-j="cascada">Cascada</button><button data-j="arena">Arena</button><button data-j="2048">2048</button><button data-j="sudoku">Sudoku</button><button data-j="buscaminas">Buscaminas</button></div>' +
     '<div class="j-sonido"><button type="button" class="j-mudo" aria-label="Silenciar"><i class="fas fa-volume-high"></i></button><input type="range" class="j-vol" min="0" max="100" aria-label="Volumen del juego"><span class="j-snom">Sonido de Stack</span></div>' +
-    '<div class="j-caja" data-j="stack"></div><div class="j-caja" data-j="snake" hidden></div><div class="j-caja" data-j="cascada" hidden></div><div class="j-caja" data-j="arena" hidden></div>';
+    '<div class="j-caja" data-j="stack"></div><div class="j-caja" data-j="snake" hidden></div><div class="j-caja" data-j="cascada" hidden></div><div class="j-caja" data-j="arena" hidden></div><div class="j-caja" data-j="2048" hidden></div><div class="j-caja" data-j="sudoku" hidden></div><div class="j-caja" data-j="buscaminas" hidden></div>';
   const cajas = {}; app.querySelectorAll('.j-caja').forEach(c => cajas[c.dataset.j] = c);
-  const juegos = { stack: crearStack(cajas.stack), snake: crearSnake(cajas.snake), cascada: crearCascada(cajas.cascada), arena: crearArena(cajas.arena) };
+  const juegos = { stack: crearStack(cajas.stack), snake: crearSnake(cajas.snake), cascada: crearCascada(cajas.cascada), arena: crearArena(cajas.arena),
+    '2048': crearIframe(cajas['2048'], '2048.html', '2048'), sudoku: crearIframe(cajas.sudoku, 'sudoku.html', 'Sudoku'), buscaminas: crearIframe(cajas.buscaminas, 'buscaminas.html', 'Buscaminas') };
+  // Los juegos en iframe avisan su alto (para que no quede barra de scroll) y piden cerrar con Esc
+  let cerrarVentana = null;
+  window.addEventListener('message', e => {
+    const d = e.data || {};
+    if (d.juegoAlto) Object.values(juegos).forEach(j => { if (j.iframe && j.archivo === d.juego) j.alto(d.juegoAlto); });
+    if (d.juegoCerrar && cerrarVentana) cerrarVentana();
+  });
+  // Solo corre el reloj del juego en iframe que se está viendo
+  function avisarPausas() { Object.keys(juegos).forEach(k => { if (juegos[k].iframe) juegos[k].pausar(!(visible && actual === k)); }); }
   let actual = 'stack';
   juegos.stack.medir();
 
   // Barra de sonido: muestra el volumen del juego que está abierto
-  const NOMBRES_J = { stack: 'Stack', snake: 'Snake', cascada: 'Cascada', arena: 'Arena' };
+  const NOMBRES_J = { stack: 'Stack', snake: 'Snake', cascada: 'Cascada', arena: 'Arena', '2048': '2048', sudoku: 'Sudoku', buscaminas: 'Buscaminas' };
   const sBtn = app.querySelector('.j-mudo'), sVol = app.querySelector('.j-vol'), sNom = app.querySelector('.j-snom');
   function mostrarSonido() {
+    app.querySelector('.j-sonido').hidden = !!juegos[actual].iframe; // esos juegos traen su propia barra de sonido
+    if (juegos[actual].iframe) return;
     const c = Sonido.ajustes(actual), apagado = c.mudo || c.vol <= 0;
     sVol.value = Math.round(c.vol * 100); sNom.textContent = 'Sonido de ' + NOMBRES_J[actual];
     sBtn.classList.toggle('mudo', apagado);
@@ -620,7 +656,7 @@
     app.querySelectorAll('.j-tabs button').forEach(o => o.classList.toggle('on', o === b));
     Object.keys(cajas).forEach(k => cajas[k].hidden = k !== b.dataset.j);
     if (actual === 'arena' && b.dataset.j !== 'arena') juegos.arena.salir();
-    actual = b.dataset.j; mostrarSonido();
+    actual = b.dataset.j; mostrarSonido(); avisarPausas();
     const vj = app.closest('.vj'); if (vj) vj.classList.toggle('ancha', actual === 'arena');
     juegos[actual].medir();
   }));
@@ -646,15 +682,16 @@
     }
     function abrir(nombre) {
       ventana.hidden = false; document.body.classList.add('juego-abierto');
-      visible = true; activo = true; antes = performance.now();
+      visible = true; activo = true; antes = performance.now(); avisarPausas();
       elegir(juegos[nombre] ? nombre : actual);
       juegos[actual].medir();
       const menu = document.querySelector('.nav-links'); if (menu) menu.classList.remove('open');
     }
+    cerrarVentana = () => cerrar();
     function cerrar() {
       juegos.arena.salir();
       ventana.hidden = true; document.body.classList.remove('juego-abierto');
-      visible = false; activo = false;
+      visible = false; activo = false; avisarPausas();
     }
     document.querySelectorAll('[data-jugar]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); abrir(el.dataset.jugar); }));
     ventana.querySelector('.vj-x').addEventListener('click', cerrar);

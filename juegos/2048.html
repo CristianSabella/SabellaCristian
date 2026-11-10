@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>2048 | Cristian Sabella</title>
+<style>
+  :root {
+    --bg: #020712; --panel: #050b14; --celda: #0b1828; --line: rgba(79,195,255,.25);
+    --blue: #4fc3ff; --pink: #d63bb0; --violeta: #8b5cf6; --text: #e6f4ff; --muted: #8fa9c4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, sans-serif; display: grid; place-items: center; padding: 16px; }
+  .juego { width: min(440px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .arriba { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  h1 { margin: 0; font-size: 34px; font-weight: 800; background: linear-gradient(135deg, var(--blue), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .datos { margin-left: auto; display: flex; gap: 8px; }
+  .dato { background: #071222; border: 1px solid var(--line); border-radius: 10px; padding: 5px 12px; text-align: center; min-width: 70px; }
+  .dato small { display: block; color: var(--muted); font-size: 11px; font-weight: 600; }
+  .dato b { font-size: 18px; }
+  .barra { display: flex; gap: 8px; margin-bottom: 12px; }
+  .btn { flex: 1; padding: 10px 0; border-radius: 12px; border: 1px solid rgba(79,195,255,.3); background: rgba(79,195,255,.08); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+  .btn.main { background: linear-gradient(135deg, var(--blue), var(--pink)); border-color: transparent; color: #fff; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .sonido { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 6px 12px 6px 6px; border-radius: 12px; background: rgba(214,59,176,.07); border: 1px solid rgba(214,59,176,.3); }
+  .sonido button { width: 34px; height: 34px; flex: none; border-radius: 50%; border: 0; background: var(--pink); color: #fff; font-size: 15px; cursor: pointer; }
+  .sonido button.mudo { background: rgba(255,255,255,.12); color: var(--muted); }
+  .sonido input { flex: 1; max-width: 220px; accent-color: var(--pink); }
+  .sonido span { color: var(--muted); font-size: 12px; font-weight: 600; }
+  .tablero { position: relative; width: 100%; aspect-ratio: 1; background: #071222; border: 1px solid var(--line); border-radius: 14px; padding: var(--gap); --gap: 10px; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .fondo { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); width: 100%; height: 100%; }
+  .fondo div { background: var(--celda); border-radius: 10px; }
+  .fichas { position: absolute; inset: var(--gap); }
+  .ficha { position: absolute; width: calc((100% - 3 * var(--gap)) / 4); height: calc((100% - 3 * var(--gap)) / 4); border-radius: 10px; display: grid; place-items: center; font-weight: 800; transition: transform .11s ease-in-out; will-change: transform; }
+  .ficha span { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 10px; }
+  .ficha.sale { opacity: 0; transition: transform .11s ease-in-out, opacity 0s .11s; }
+  .ficha.nueva span { animation: aparecer .18s ease-out; }
+  .ficha.junta span { animation: pop .2s ease-out; }
+  @keyframes aparecer { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1); } }
+  .cartel { position: absolute; inset: 0; border-radius: 14px; background: rgba(2,7,18,.8); display: grid; place-content: center; text-align: center; gap: 6px; }
+  .cartel[hidden] { display: none; }
+  .cartel h2 { margin: 0; font-size: 34px; font-weight: 800; text-shadow: 0 0 18px rgba(214,59,176,.8); }
+  .cartel p { margin: 0 0 10px; color: var(--muted); }
+  .cartel .fila { display: flex; gap: 8px; justify-content: center; }
+  .cartel .btn { flex: none; padding: 10px 18px; }
+  .ayuda { text-align: center; color: var(--muted); font-size: 13px; margin-top: 12px; }
+  /* Dentro de la ventana de juegos del portfolio: sin marco propio */
+  html.embed body { padding: 0; min-height: 0; display: block; background: transparent; }
+  html.embed .juego { width: 100%; border: 0; box-shadow: none; padding: 0; background: transparent; }
+  html.embed .arriba h1 { display: none; }
+  html.embed .datos { margin-left: 0; width: 100%; }
+  html.embed .dato { flex: 1; }
+</style>
+<script>
+// Si el juego está metido dentro del portfolio, avisa su alto y escucha la pausa
+window.juegoPausado = false;
+if (window.self !== window.top) {
+  document.documentElement.classList.add('embed');
+  addEventListener('message', e => { if (e.data && 'juegoPausa' in e.data) window.juegoPausado = !!e.data.juegoPausa; });
+  addEventListener('keydown', e => { if (e.key === 'Escape') parent.postMessage({ juegoCerrar: true }, '*'); });
+  addEventListener('load', () => {
+    const avisar = () => parent.postMessage({ juegoAlto: document.documentElement.scrollHeight, juego: location.pathname.split('/').pop() }, '*');
+    new ResizeObserver(avisar).observe(document.body); avisar();
+  });
+}
+</script>
+</head>
+<body>
+<div class="juego">
+  <div class="arriba">
+    <h1>2048</h1>
+    <div class="datos">
+      <div class="dato"><small>Puntos</small><b id="puntos">0</b></div>
+      <div class="dato"><small>Récord</small><b id="record">0</b></div>
+    </div>
+  </div>
+  <div class="barra">
+    <button class="btn main" id="nuevo">Nuevo juego</button>
+    <button class="btn" id="deshacer" disabled>↶ Deshacer</button>
+  </div>
+  <div class="sonido">
+    <button id="mudo" aria-label="Silenciar">🔊</button>
+    <input type="range" id="vol" min="0" max="100" aria-label="Volumen">
+    <span>Sonido</span>
+  </div>
+  <div class="tablero" id="tablero">
+    <div class="fondo">
+      <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+    </div>
+    <div class="fichas" id="fichas"></div>
+    <div class="cartel" id="cartel" hidden></div>
+  </div>
+  <div class="ayuda">Flechas o WASD para mover · En el celular, deslizá el dedo<br>Juntá fichas iguales hasta llegar a 2048</div>
+</div>
+
+<script>
+(function () {
+  const N = 4;
+  const elFichas = document.getElementById('fichas'), elTablero = document.getElementById('tablero');
+  const elPuntos = document.getElementById('puntos'), elRecord = document.getElementById('record');
+  const elCartel = document.getElementById('cartel'), btnDeshacer = document.getElementById('deshacer');
+
+  // ---------- Guardado (solo en este navegador) ----------
+  function leer(k, def) { try { const v = localStorage.getItem(k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } }
+  function guardar(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  // ---------- Sonido (Web Audio, sin archivos) ----------
+  const conf = leer('sonido-2048', { vol: 0.6, mudo: false });
+  let ctx = null, salida = null;
+  function audio() {
+    if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; ctx = new AC(); salida = ctx.createGain(); salida.connect(ctx.destination); }
+    if (ctx.state === 'suspended') ctx.resume();
+    salida.gain.value = conf.mudo ? 0 : conf.vol;
+    return ctx;
+  }
+  function tono(f, dur, o = {}) {
+    if (conf.mudo || conf.vol <= 0 || !audio()) return;
+    const t = ctx.currentTime + (o.retraso || 0), osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = o.tipo || 'triangle'; osc.frequency.setValueAtTime(f, t);
+    if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || 0.2, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g); g.connect(salida); osc.start(t); osc.stop(t + dur + 0.02);
+  }
+  const sonido = {
+    mover: () => tono(220, 0.06, { f2: 180, vol: 0.08 }),
+    juntar: valor => { const nota = 330 * Math.pow(2, Math.min(Math.log2(valor), 14) / 6); tono(nota, 0.12, { vol: 0.18 }); tono(nota * 1.5, 0.1, { vol: 0.08, tipo: 'sine', retraso: 0.03 }); },
+    ganar: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tono(f, 0.2, { retraso: i * 0.09, vol: 0.2 })),
+    perder: () => [392, 330, 262, 196].forEach((f, i) => tono(f, 0.25, { retraso: i * 0.15, vol: 0.18 })),
+    empezar: () => [392, 523].forEach((f, i) => tono(f, 0.12, { retraso: i * 0.08, vol: 0.15 }))
+  };
+  const btnMudo = document.getElementById('mudo'), inVol = document.getElementById('vol');
+  function mostrarSonido() {
+    const apagado = conf.mudo || conf.vol <= 0;
+    inVol.value = Math.round(conf.vol * 100);
+    btnMudo.textContent = apagado ? '🔇' : conf.vol < 0.4 ? '🔉' : '🔊';
+    btnMudo.classList.toggle('mudo', apagado);
+    if (salida) salida.gain.value = apagado ? 0 : conf.vol;
+  }
+  btnMudo.addEventListener('click', () => {
+    if (conf.mudo || conf.vol <= 0) { conf.mudo = false; if (conf.vol <= 0) conf.vol = 0.6; } else conf.mudo = true;
+    guardar('sonido-2048', conf); mostrarSonido(); btnMudo.blur(); sonido.empezar();
+  });
+  inVol.addEventListener('input', () => { conf.vol = inVol.value / 100; conf.mudo = false; guardar('sonido-2048', conf); mostrarSonido(); });
+  inVol.addEventListener('change', () => { sonido.juntar(64); inVol.blur(); });
+  mostrarSonido();
+
+  // ---------- Colores de las fichas (de celeste a violeta a fucsia, como la web) ----------
+  const PALETA = [[79,195,255], [139,92,246], [214,59,176]];
+  function colorDe(v) {
+    const paso = Math.min(Math.log2(v) - 1, 10) / 10; // 2 -> 0, 2048 -> 1
+    const [a, b, t] = paso < 0.5 ? [PALETA[0], PALETA[1], paso * 2] : [PALETA[1], PALETA[2], (paso - 0.5) * 2];
+    return a.map((c, i) => Math.round(c + (b[i] - c) * t));
+  }
+  function estiloFicha(span, v) {
+    const [r, g, b] = colorDe(v), fuerza = 0.18 + Math.min(Math.log2(v), 11) * 0.07;
+    const solido = a => `rgb(${[r, g, b].map((c, i) => Math.round([7, 18, 34][i] + (c - [7, 18, 34][i]) * a)).join(',')})`; // sin transparencia
+    span.style.background = v > 2048 ? 'linear-gradient(135deg,#4fc3ff,#d63bb0)' : solido(Math.min(1, fuerza));
+    span.style.color = v <= 4 ? `rgb(${r},${g},${b})` : '#fff';
+    if (v <= 4) span.style.background = solido(0.14);
+    span.style.border = v <= 4 ? `1px solid rgba(${r},${g},${b},.45)` : '0';
+    span.style.boxShadow = v >= 128 ? `0 0 ${Math.min(26, (Math.log2(v) - 6) * 4)}px rgba(${r},${g},${b},.75)` : 'none';
+    const digitos = String(v).length;
+    span.style.fontSize = `calc(var(--tam) * ${digitos <= 2 ? 0.42 : digitos === 3 ? 0.34 : digitos === 4 ? 0.27 : 0.22})`;
+  }
+
+  // ---------- Estado ----------
+  let fichas = [], idSig = 1, puntos = 0, record = leer('record-2048', 0), gano = false, sigue = false, terminado = false, anterior = null;
+  elRecord.textContent = record;
+  const grilla = () => { const g = Array.from({ length: N }, () => Array(N).fill(null)); fichas.forEach(f => { if (!f.borrar) g[f.y][f.x] = f; }); return g; };
+
+  function nuevaFicha() {
+    const g = grilla(), libres = [];
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!g[y][x]) libres.push([x, y]);
+    if (!libres.length) return;
+    const [x, y] = libres[Math.floor(Math.random() * libres.length)];
+    fichas.push({ id: idSig++, x, y, v: Math.random() < 0.9 ? 2 : 4, nueva: true });
+  }
+  function empezar() {
+    fichas = []; puntos = 0; gano = false; sigue = false; terminado = false; anterior = null;
+    nuevaFicha(); nuevaFicha(); elCartel.hidden = true; btnDeshacer.disabled = true;
+    dibujar(); sonido.empezar(); guardarPartida();
+  }
+
+  // ---------- Dibujo ----------
+  const nodos = new Map();
+  function medir() { elTablero.style.setProperty('--tam', (elFichas.clientWidth - 30) / 4 + 'px'); }
+  function posicion(f) { const p = (elFichas.clientWidth + 10) / 4; return `translate(${f.x * p}px, ${f.y * p}px)`; }
+  function dibujar() {
+    medir();
+    const vivos = new Set();
+    fichas.forEach(f => {
+      vivos.add(f.id);
+      let n = nodos.get(f.id);
+      if (!n) { n = document.createElement('div'); n.className = 'ficha'; n.innerHTML = '<span></span>'; elFichas.appendChild(n); nodos.set(f.id, n); n.style.transform = posicion(f); }
+      n.style.transform = posicion(f); n.style.zIndex = f.borrar ? 1 : 2; n.classList.toggle('sale', !!f.borrar);
+      const span = n.firstChild;
+      if (span.textContent !== String(f.v)) { span.textContent = f.v; estiloFicha(span, f.v); }
+      n.classList.toggle('nueva', !!f.nueva);
+      n.classList.remove('junta'); if (f.junta) { void n.offsetWidth; n.classList.add('junta'); }
+    });
+    nodos.forEach((n, id) => { if (!vivos.has(id)) { n.remove(); nodos.delete(id); } });
+    elPuntos.textContent = puntos;
+    if (puntos > record) { record = puntos; elRecord.textContent = record; guardar('record-2048', record); }
+  }
+
+  // ---------- Movimiento ----------
+  function mover(dx, dy) {
+    if (terminado || (gano && !sigue)) return;
+    // limpiar las fichas que se fundieron en la jugada anterior
+    fichas = fichas.filter(f => !f.borrar); fichas.forEach(f => { f.nueva = false; f.junta = false; });
+    const copia = { fichas: fichas.map(f => ({ ...f })), puntos };
+    const g = grilla();
+    const orden = [0, 1, 2, 3];
+    const xs = dx > 0 ? [...orden].reverse() : orden, ys = dy > 0 ? [...orden].reverse() : orden;
+    let movio = false, sumados = 0, mayor = 0;
+    const fundidas = new Set();
+    for (const y of ys) for (const x of xs) {
+      const f = g[y][x]; if (!f) continue;
+      let nx = x, ny = y;
+      while (true) {
+        const tx = nx + dx, ty = ny + dy;
+        if (tx < 0 || ty < 0 || tx >= N || ty >= N) break;
+        const otra = g[ty][tx];
+        if (!otra) { nx = tx; ny = ty; continue; }
+        if (otra.v === f.v && !fundidas.has(otra.id)) {
+          // se juntan: la ficha de destino duplica y esta se desliza encima y desaparece
+          g[y][x] = null; f.x = tx; f.y = ty; f.borrar = true;
+          otra.v *= 2; otra.junta = true; fundidas.add(otra.id);
+          puntos += otra.v; sumados++; mayor = Math.max(mayor, otra.v); movio = true;
+          if (otra.v === 2048 && !gano) gano = true;
+          nx = null;
+        }
+        break;
+      }
+      if (nx !== null && (nx !== x || ny !== y)) { g[y][x] = null; g[ny][nx] = f; f.x = nx; f.y = ny; movio = true; }
+    }
+    if (!movio) return;
+    anterior = copia; btnDeshacer.disabled = false;
+    nuevaFicha(); dibujar();
+    if (sumados) sonido.juntar(mayor); else sonido.mover();
+    if (gano && !sigue) { setTimeout(() => { mostrarCartel('¡Llegaste a 2048!', `Hiciste ${puntos} puntos.`, true); sonido.ganar(); }, 250); }
+    else if (!hayMovidas()) { terminado = true; setTimeout(() => { mostrarCartel('Sin movimientos', `Puntos: ${puntos} · Récord: ${record}`, false); sonido.perder(); }, 300); }
+    guardarPartida();
+  }
+  function hayMovidas() {
+    const g = grilla();
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const f = g[y][x]; if (!f) return true;
+      if (x < N - 1 && g[y][x + 1] && g[y][x + 1].v === f.v) return true;
+      if (y < N - 1 && g[y + 1][x] && g[y + 1][x].v === f.v) return true;
+    }
+    return false;
+  }
+  function deshacer() {
+    if (!anterior) return;
+    fichas = anterior.fichas; puntos = anterior.puntos; anterior = null; terminado = false;
+    if (gano && !fichas.some(f => f.v >= 2048)) gano = false;
+    btnDeshacer.disabled = true; elCartel.hidden = true;
+    nodos.forEach(n => n.remove()); nodos.clear(); dibujar(); sonido.mover(); guardarPartida();
+  }
+  function mostrarCartel(titulo, texto, gane) {
+    elCartel.innerHTML = `<h2>${titulo}</h2><p>${texto}</p><div class="fila">${gane ? '<button class="btn" id="seguir">Seguir jugando</button>' : ''}<button class="btn main" id="otra">Jugar de nuevo</button></div>`;
+    elCartel.hidden = false;
+    document.getElementById('otra').onclick = empezar;
+    const s = document.getElementById('seguir'); if (s) s.onclick = () => { sigue = true; elCartel.hidden = true; guardarPartida(); };
+  }
+
+  // La partida queda guardada si cerrás y volvés a abrir
+  function guardarPartida() { guardar('partida-2048', { fichas: fichas.filter(f => !f.borrar).map(({ x, y, v }) => ({ x, y, v })), puntos, gano, sigue, terminado }); }
+  function cargarPartida() {
+    const p = leer('partida-2048', null);
+    if (!p || !p.fichas || !p.fichas.length || p.terminado) return false;
+    fichas = p.fichas.map(f => ({ ...f, id: idSig++ })); puntos = p.puntos; gano = p.gano; sigue = p.sigue;
+    dibujar(); return true;
+  }
+
+  // ---------- Controles ----------
+  const TECLAS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], KeyA: [-1, 0], KeyD: [1, 0], KeyW: [0, -1], KeyS: [0, 1] };
+  document.addEventListener('keydown', e => {
+    if (e.target === inVol) return;
+    const d = TECLAS[e.code]; if (!d) return;
+    e.preventDefault(); audio(); mover(d[0], d[1]);
+  });
+  let toque = null;
+  elTablero.addEventListener('pointerdown', e => { toque = { x: e.clientX, y: e.clientY }; audio(); });
+  elTablero.addEventListener('pointerup', e => {
+    if (!toque) return;
+    const dx = e.clientX - toque.x, dy = e.clientY - toque.y; toque = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    if (Math.abs(dx) > Math.abs(dy)) mover(Math.sign(dx), 0); else mover(0, Math.sign(dy));
+  });
+  elTablero.addEventListener('pointercancel', () => toque = null);
+  document.getElementById('nuevo').addEventListener('click', e => { e.target.blur(); empezar(); });
+  btnDeshacer.addEventListener('click', e => { e.target.blur(); deshacer(); });
+  window.addEventListener('resize', () => dibujar());
+
+  if (!cargarPartida()) { fichas = []; nuevaFicha(); nuevaFicha(); dibujar(); }
+})();
+</script>
+</body>
+</html>
