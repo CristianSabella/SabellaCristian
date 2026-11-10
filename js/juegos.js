@@ -14,8 +14,10 @@
   const css = document.createElement('style');
   css.textContent = `
     #juegos-app{max-width:460px;margin:0 auto}
+    .vj.ancha #juegos-app{max-width:none}
+    #ventana-juegos .vj.ancha{width:min(1000px,100%)}
     .j-tabs{display:flex;gap:8px;margin-bottom:14px}
-    .j-tabs button{flex:1;padding:11px 0;border-radius:12px;border:1px solid rgba(79,195,255,.3);background:rgba(79,195,255,.08);color:${TEXTO};font:inherit;font-weight:700;cursor:pointer;transition:background .2s}
+    .j-tabs button{flex:1;min-width:0;padding:11px 0;border-radius:12px;border:1px solid rgba(79,195,255,.3);background:rgba(79,195,255,.08);color:${TEXTO};font:inherit;font-weight:700;cursor:pointer;transition:background .2s}
     .j-tabs button.on{background:linear-gradient(135deg,#4fc3ff,#d63bb0);border-color:transparent;color:#fff}
     .j-caja{background:#050b14;border:1px solid rgba(79,195,255,.25);border-radius:18px;padding:14px;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
     .j-caja[hidden]{display:none}
@@ -454,20 +456,53 @@
   }
 
   // =====================================================================
+  // ARENA HELADA: shooter 3D. Three.js y el juego se cargan recién cuando se abre la pestaña
+  // =====================================================================
+  function cargarScript(src) {
+    return new Promise((ok, mal) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = mal; document.head.appendChild(s); });
+  }
+  function crearArena(caja) {
+    caja.innerHTML = '<div style="height:320px;display:grid;place-content:center;text-align:center;color:' + GRIS + '"><b style="color:' + TEXTO + ';font-size:22px">Arena Helada</b><span class="j-estado">Cargando el juego 3D…</span></div>';
+    let juego = null, cargando = false;
+    function cargar() {
+      if (cargando) return; cargando = true;
+      const base = (document.querySelector('script[src*="juegos.js"]') || {}).src || '';
+      const arenaSrc = base ? base.replace(/juegos\.js.*$/, 'arena.js') : 'js/arena.js';
+      (window.THREE ? Promise.resolve() : cargarScript('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js'))
+        .then(() => window.ArenaHelada ? null : cargarScript(arenaSrc))
+        .then(() => {
+          juego = window.ArenaHelada(caja, { activo: () => visible && actual === 'arena' });
+          juego.medir();
+        })
+        .catch(() => { cargando = false; const e = caja.querySelector('.j-estado'); if (e) e.textContent = 'No se pudo cargar. Revisá tu conexión y volvé a abrir la pestaña.'; });
+    }
+    return {
+      medir() { if (juego) juego.medir(); else cargar(); },
+      update(dt) { if (juego) juego.update(dt); },
+      dibujar() { if (juego) juego.dibujar(); },
+      salir() { if (juego) juego.salir(); },
+      tecla(code) { return juego ? juego.tecla(code) : false; }
+    };
+  }
+
+  // =====================================================================
   // Pestañas y bucle principal
   // =====================================================================
   app.innerHTML =
-    '<div class="j-tabs"><button data-j="stack" class="on">Stack</button><button data-j="snake">Snake</button><button data-j="cascada">Cascada</button></div>' +
-    '<div class="j-caja" data-j="stack"></div><div class="j-caja" data-j="snake" hidden></div><div class="j-caja" data-j="cascada" hidden></div>';
+    '<div class="j-tabs"><button data-j="stack" class="on">Stack</button><button data-j="snake">Snake</button><button data-j="cascada">Cascada</button><button data-j="arena">Arena</button></div>' +
+    '<div class="j-caja" data-j="stack"></div><div class="j-caja" data-j="snake" hidden></div><div class="j-caja" data-j="cascada" hidden></div><div class="j-caja" data-j="arena" hidden></div>';
   const cajas = {}; app.querySelectorAll('.j-caja').forEach(c => cajas[c.dataset.j] = c);
-  const juegos = { stack: crearStack(cajas.stack), snake: crearSnake(cajas.snake), cascada: crearCascada(cajas.cascada) };
+  const juegos = { stack: crearStack(cajas.stack), snake: crearSnake(cajas.snake), cascada: crearCascada(cajas.cascada), arena: crearArena(cajas.arena) };
   let actual = 'stack';
   juegos.stack.medir();
 
   app.querySelectorAll('.j-tabs button').forEach(b => b.addEventListener('click', () => {
     app.querySelectorAll('.j-tabs button').forEach(o => o.classList.toggle('on', o === b));
     Object.keys(cajas).forEach(k => cajas[k].hidden = k !== b.dataset.j);
-    actual = b.dataset.j; juegos[actual].medir();
+    if (actual === 'arena' && b.dataset.j !== 'arena') juegos.arena.salir();
+    actual = b.dataset.j;
+    const vj = app.closest('.vj'); if (vj) vj.classList.toggle('ancha', actual === 'arena');
+    juegos[actual].medir();
   }));
 
   // Las teclas del juego solo se usan si la persona tocó el juego (así no se traba el scroll de la página)
@@ -496,13 +531,19 @@
       const menu = document.querySelector('.nav-links'); if (menu) menu.classList.remove('open');
     }
     function cerrar() {
+      juegos.arena.salir();
       ventana.hidden = true; document.body.classList.remove('juego-abierto');
       visible = false; activo = false;
     }
     document.querySelectorAll('[data-jugar]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); abrir(el.dataset.jugar); }));
     ventana.querySelector('.vj-x').addEventListener('click', cerrar);
     ventana.addEventListener('pointerdown', e => { if (e.target === ventana) cerrar(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !ventana.hidden) cerrar(); });
+    document.addEventListener('keydown', e => {
+      // Con la Arena, el primer Esc solo suelta el mouse (pausa); no cierra la ventana
+      if (e.key !== 'Escape' || ventana.hidden) return;
+      if (actual === 'arena' && (document.pointerLockElement || performance.now() - (+cajas.arena.dataset.unlock || 0) < 600)) return;
+      cerrar();
+    });
   } else if ('IntersectionObserver' in window) {
     new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(app);
   }
