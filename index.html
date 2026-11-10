@@ -170,8 +170,8 @@
   #audio-control { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--pink); color: #fff; cursor: pointer; }
   #audio-volume { width: 80px; accent-color: var(--pink); }
   /* Titileo de los botones flotantes: titilan como el de WhatsApp, de a uno por vez, en orden al azar.
-     Ciclo de 8 s: cada botón tiene su turno de 2 s, así nunca se pisan (el script de abajo les da el turno) */
-  .pulsa { animation-duration: 8s; animation-iteration-count: infinite; animation-timing-function: ease-out; }
+     Ciclo de 2 s: cada botón tiene su turno de 0,5 s, así nunca se pisan (el script de abajo les da el turno) */
+  .pulsa { animation-duration: 2s; animation-iteration-count: infinite; animation-timing-function: ease-out; }
   #audio-control.pulsa { animation-name: p-musica; }
   #whatsapp-btn.pulsa { animation-name: p-wa; }
   #charlie-burbuja.pulsa { animation-name: p-charlie; }
@@ -607,8 +607,8 @@
 
   // Titileo de los botones flotantes
   try {
-    // Orden al azar en cada visita: a cada botón le toca un turno distinto (0, 2, 4 o 6 s del ciclo de 8 s)
-    const turnos = [0, 2, 4, 6].sort(() => Math.random() - 0.5);
+    // Orden al azar en cada visita: a cada botón le toca un turno distinto (0; 0,5; 1 o 1,5 s del ciclo de 2 s)
+    const turnos = [0, 0.5, 1, 1.5].sort(() => Math.random() - 0.5);
     const botones = [
       { id: 'audio-control', turno: turnos[0], musica: true },
       { id: 'whatsapp-btn', turno: turnos[1] },
@@ -619,8 +619,8 @@
 
     function prender(el, turno) {
       // Ajusta el retraso para que todos sigan el mismo reloj y nunca titilen dos juntos
-      const ahora = (Date.now() / 1000) % 8;
-      el.style.animationDelay = (((turno - ahora) % 8) - 8) + 's';
+      const ahora = (Date.now() / 1000) % 2;
+      el.style.animationDelay = (((turno - ahora) % 2) - 2) + 's';
       el.classList.add('pulsa');
     }
     function pausado() {
