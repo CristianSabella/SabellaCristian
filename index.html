@@ -169,11 +169,17 @@
   #audio-box { position: fixed; bottom: 24px; left: 24px; z-index: 1000; display: flex; align-items: center; gap: 10px; background: rgba(2,7,18,.85); border: 1px solid rgba(214,59,176,.45); border-radius: 30px; padding: 6px 14px 6px 6px; }
   #audio-control { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--pink); color: #fff; cursor: pointer; }
   #audio-volume { width: 80px; accent-color: var(--pink); }
-  /* Titileo de los botones flotantes: titila uno al azar por vez (lo maneja el script de abajo) */
-  .titila { animation: rebote .45s ease-out 2; }
-  .titila::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; animation: titileo .9s ease-out 2; }
-  @keyframes titileo { 0% { box-shadow: 0 0 0 0 var(--pulso, rgba(214,59,176,.95)); } 100% { box-shadow: 0 0 0 22px rgba(0,0,0,0); } }
-  @keyframes rebote { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.15); } }
+  /* Titileo de los botones flotantes: titilan como el de WhatsApp, de a uno por vez, en orden al azar.
+     Ciclo de 8 s: cada botón tiene su turno de 2 s, así nunca se pisan (el script de abajo les da el turno) */
+  .pulsa { animation-duration: 8s; animation-iteration-count: infinite; animation-timing-function: ease-out; }
+  #audio-control.pulsa { animation-name: p-musica; }
+  #whatsapp-btn.pulsa { animation-name: p-wa; }
+  #charlie-burbuja.pulsa { animation-name: p-charlie; }
+  #cig-burbuja.pulsa { animation-name: p-bordo; }
+  @keyframes p-musica { 0% { box-shadow: 0 0 0 0 rgba(214,59,176,.9); } 18% { box-shadow: 0 0 0 16px rgba(214,59,176,0); } 19% { box-shadow: 0 0 0 0 rgba(214,59,176,0); } 100% { box-shadow: 0 0 0 0 rgba(214,59,176,0); } }
+  @keyframes p-wa { 0% { box-shadow: 0 0 0 0 rgba(37,211,102,.8); } 18% { box-shadow: 0 0 0 16px rgba(37,211,102,0); } 19% { box-shadow: 0 0 0 0 rgba(37,211,102,0); } 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0); } }
+  @keyframes p-charlie { 0% { box-shadow: 0 0 0 0 rgba(30,111,217,.85), 0 4px 14px rgba(0,0,0,.35); } 18% { box-shadow: 0 0 0 16px rgba(30,111,217,0), 0 4px 14px rgba(0,0,0,.35); } 19% { box-shadow: 0 0 0 0 rgba(30,111,217,0), 0 4px 14px rgba(0,0,0,.35); } 100% { box-shadow: 0 0 0 0 rgba(30,111,217,0), 0 4px 14px rgba(0,0,0,.35); } }
+  @keyframes p-bordo { 0% { box-shadow: 0 0 0 0 rgba(201,61,90,.9), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } 18% { box-shadow: 0 0 0 16px rgba(201,61,90,0), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } 19% { box-shadow: 0 0 0 0 rgba(201,61,90,0), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } 100% { box-shadow: 0 0 0 0 rgba(201,61,90,0), 0 0 26px rgba(201,61,90,.5), 0 8px 20px rgba(0,0,0,.35); } }
 
   /* REVEAL */
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s, transform .7s; }
@@ -504,7 +510,7 @@
 <footer>© <span id="year"></span> Cristian Sabella · Hecho con HTML, CSS y JavaScript</footer>
 
 <!-- Música: intenta arrancar sola al cargar; si el navegador no deja, arranca con el primer clic, toque o tecla -->
-<audio id="bg-music" src="NEFFEX_Myself.mp3" loop preload="auto"></audio>
+<audio id="bg-music" src="https://cristiansabella.github.io/SabellaCristian/NEFFEX_Myself.mp3" loop preload="auto"></audio>
 <div id="audio-box">
   <button id="audio-control" onclick="toggleAudio()" aria-label="Música"><i id="audio-icon" class="fas fa-music"></i></button>
   <input type="range" id="audio-volume" min="0" max="100" value="40" aria-label="Volumen">
@@ -570,82 +576,73 @@
   audio.volume = 0.4;
   let userPaused = false;
   function playAudio() {
-    audio.play().then(() => { icon.className = 'fas fa-pause'; }).catch(() => { icon.className = 'fas fa-music'; });
+    try {
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) {}
   }
   function toggleAudio() {
     if (audio.paused) { userPaused = false; playAudio(); }
-    else { userPaused = true; audio.pause(); icon.className = 'fas fa-music'; }
+    else { userPaused = true; audio.pause(); }
   }
+  // El ícono sigue lo que de verdad pasa con la música
+  audio.addEventListener('playing', () => { icon.className = 'fas fa-pause'; quitarGestos(); });
+  audio.addEventListener('pause', () => { icon.className = 'fas fa-music'; });
   volume.addEventListener('input', function () {
     audio.volume = this.value / 100;
     if (audio.paused && !userPaused) playAudio();
   });
-  // Intenta arrancar sola apenas carga (algunos navegadores lo permiten, sobre todo si ya visitaste la web)
-  playAudio();
-  // Si el navegador la bloqueó, arranca con el primer clic, toque o tecla en cualquier parte.
-  // Se sigue intentando con cada toque hasta que la música suene de verdad (en el celular
-  // el navegador solo la habilita al levantar el dedo, no al apoyarlo)
+  // Si el navegador no la deja arrancar sola, arranca con el primer clic, toque o tecla en cualquier parte.
+  // Se sigue intentando con cada toque hasta que suene (en el celular el navegador la habilita al levantar el dedo)
   const gestos = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
   function quitarGestos() { gestos.forEach(ev => document.removeEventListener(ev, primerGesto, true)); }
   function primerGesto(e) {
-    if (e.target.closest && e.target.closest('#audio-box')) return;
+    if (e.target && e.target.closest && e.target.closest('#audio-box')) return;
     if (userPaused || !audio.paused) { quitarGestos(); return; }
-    audio.play().then(() => { icon.className = 'fas fa-pause'; quitarGestos(); }).catch(() => {});
+    playAudio();
   }
   gestos.forEach(ev => document.addEventListener(ev, primerGesto, true));
+  // Intenta arrancar sola apenas carga (algunos navegadores lo permiten, sobre todo si ya visitaste la web)
+  playAudio();
 
-  // Titileo de los botones flotantes: cada 2 segundos titila uno al azar (nunca el mismo dos veces seguidas)
-  (function () {
+  // Titileo de los botones flotantes
+  try {
+    // Orden al azar en cada visita: a cada botón le toca un turno distinto (0, 2, 4 o 6 s del ciclo de 8 s)
+    const turnos = [0, 2, 4, 6].sort(() => Math.random() - 0.5);
     const botones = [
-      { el: () => document.getElementById('audio-control'), color: 'rgba(214,59,176,.85)', musica: true },
-      { el: () => document.getElementById('whatsapp-btn'), color: 'rgba(37,211,102,.85)' },
-      { el: () => document.getElementById('charlie-burbuja'), color: null },
-      { el: () => document.getElementById('cig-burbuja'), color: 'rgba(201,61,90,.85)' }
+      { id: 'audio-control', turno: turnos[0], musica: true },
+      { id: 'whatsapp-btn', turno: turnos[1] },
+      { id: 'charlie-burbuja', turno: turnos[2] },
+      { id: 'cig-burbuja', turno: turnos[3] }
     ];
-    let ultimo = null;
     let pausaWhatsapp = false, seFue = false, respaldo = null;
 
-    // Toma el color de Charlie desde su burbuja (se configura en su panel)
-    function colorDe(b, el) {
-      if (b.color) return b.color;
-      const c = getComputedStyle(el).backgroundColor;
-      const m = c.match(/\d+(\.\d+)?/g);
-      return m && m.length >= 3 ? `rgba(${m[0]},${m[1]},${m[2]},.85)` : 'rgba(30,111,217,.85)';
-    }
-    function apagarTodos() {
-      botones.forEach(b => { const el = b.el(); if (el) el.classList.remove('titila'); });
+    function prender(el, turno) {
+      // Ajusta el retraso para que todos sigan el mismo reloj y nunca titilen dos juntos
+      const ahora = (Date.now() / 1000) % 8;
+      el.style.animationDelay = (((turno - ahora) % 8) - 8) + 's';
+      el.classList.add('pulsa');
     }
     function pausado() {
       // Un chat abierto (Charlie o Charlie Bordó) o haber ido a WhatsApp frena a todos
       if (document.querySelector('#charlie-ventana.abierta, #cig-ventana.abierta')) return true;
-      return pausaWhatsapp || document.hidden;
+      return pausaWhatsapp;
     }
-    function turno() {
-      if (pausado()) { apagarTodos(); return; }
-      const listos = botones.filter(b => {
-        const el = b.el();
-        if (!el) return false;
-        if (b.musica && userPaused) return false; // la música pausada a propósito no titila
-        return true;
+    function revisar() {
+      const frenar = pausado();
+      botones.forEach(b => {
+        const el = document.getElementById(b.id);
+        if (!el) return; // Charlie y Charlie Bordó aparecen unos segundos después
+        const debe = !frenar && !(b.musica && userPaused); // la música pausada a propósito no titila
+        const tiene = el.classList.contains('pulsa');
+        if (debe && !tiene) prender(el, b.turno);
+        if (!debe && tiene) el.classList.remove('pulsa');
       });
-      let opciones = listos.filter(b => b !== ultimo);
-      if (!opciones.length) opciones = listos;
-      if (!opciones.length) return;
-      const b = opciones[Math.floor(Math.random() * opciones.length)];
-      const el = b.el();
-      el.style.setProperty('--pulso', colorDe(b, el));
-      el.classList.remove('titila');
-      void el.offsetWidth; // reinicia la animación
-      el.classList.add('titila');
-      ultimo = b;
     }
-    document.addEventListener('animationend', e => {
-      if (e.animationName === 'titileo') e.target.classList.remove('titila');
-    });
 
     // WhatsApp: al tocarlo frenan todos hasta que la persona vuelve a la web
     document.getElementById('whatsapp-btn').addEventListener('click', () => {
-      pausaWhatsapp = true; seFue = false; apagarTodos();
+      pausaWhatsapp = true; seFue = false; revisar();
       clearTimeout(respaldo);
       // Si no se abrió nada (no salió de la página), vuelve a titilar a los 4 segundos
       respaldo = setTimeout(() => { if (!seFue) pausaWhatsapp = false; }, 4000);
@@ -656,9 +653,9 @@
     window.addEventListener('focus', volvio);
     document.addEventListener('visibilitychange', () => { document.hidden ? salio() : volvio(); });
 
-    setInterval(turno, 2000);
-    setTimeout(turno, 800);
-  })();
+    revisar();
+    setInterval(revisar, 300);
+  } catch (e) {}
 
   // Filtros de proyectos
   document.querySelectorAll('.filters button').forEach(btn => {
