@@ -7,6 +7,7 @@ window.ArenaHelada = function (caja, opciones) {
   const N_BOTS = 6, VIDA = 100, DANO_JUGADOR = 20, DANO_BOT = 10, TIEMPO_RONDA = 120;
   const NOMBRES = ['Escarcha', 'Glaciar', 'Ventisca', 'Témpano', 'Granizo', 'Aurora'];
   const tactil = window.matchMedia('(pointer: coarse)').matches;
+  const sonar = (n, a) => { if (window.SonidoJuegos) window.SonidoJuegos.sonar('arena', n, a); };
 
   // ---------- Estilos ----------
   if (!document.getElementById('ah-estilos')) {
@@ -259,11 +260,11 @@ window.ArenaHelada = function (caja, opciones) {
     });
   }
   function iniciarRonda() {
-    ronda++; tiempo = TIEMPO_RONDA; energia = 30; aparecer(); estado = 'jugando'; cartel.hidden = true; ui.feed.innerHTML = '';
+    ronda++; tiempo = TIEMPO_RONDA; energia = 30; aparecer(); estado = 'jugando'; sonar('empezar'); cartel.hidden = true; ui.feed.innerHTML = '';
     actualizarHud();
   }
   function terminarRonda(titulo, linea) {
-    estado = 'fin'; disparando = false; soltarMouse();
+    estado = 'fin'; disparando = false; soltarMouse(); sonar(titulo.startsWith('¡Ronda ganada') ? 'ganar' : 'perder');
     cartel.innerHTML = `<h3>${titulo}</h3><p>${linea}</p><p>Total: ${totales.bajas} bajas · ${totales.muertes} muertes</p><b class="btn">${tactil ? 'Tocá' : 'Hacé clic'} para la ronda ${ronda + 1}</b>`;
     cartel.hidden = false;
   }
@@ -288,7 +289,9 @@ window.ArenaHelada = function (caja, opciones) {
 
   // ---------- Disparo del jugador ----------
   function disparar() {
-    if (energia < 1 || estado !== 'jugando') return;
+    if (estado !== 'jugando') return;
+    if (energia < 1) { if (cadencia <= 0) { sonar('sinEnergia'); cadencia = 0.25; } return; }
+    sonar('disparo');
     energia -= 1; sinDisparar = 0; cadencia = 0.16; retroceso = 1; fogonazo.visible = true; setTimeout(() => fogonazo.visible = false, 50);
     const o = ojoJugador();
     const disp = jugador.velAct > 0.5 ? 0.025 : 0.008;
@@ -299,7 +302,7 @@ window.ArenaHelada = function (caja, opciones) {
     const boca = new T.Vector3(0, 0.01, -0.45).applyMatrix4(arma.matrixWorld);
     trazo(boca, fin, '#4fc3ff');
     if (blanco) {
-      blanco.vida -= DANO_JUGADOR; blanco.flash = 0.12; ui.acierto.style.opacity = 1; setTimeout(() => ui.acierto.style.opacity = 0, 120);
+      blanco.vida -= DANO_JUGADOR; blanco.flash = 0.12; sonar(blanco.vida <= 0 ? 'baja' : 'acierto'); ui.acierto.style.opacity = 1; setTimeout(() => ui.acierto.style.opacity = 0, 120);
       // Si le pegás, sabe dónde estás
       blanco.estado = 'combate'; blanco.visto = { x: jugador.x, z: jugador.z }; if (blanco.reaccion > 0.25) blanco.reaccion = 0.25;
       if (blanco.vida <= 0) {
@@ -331,9 +334,9 @@ window.ArenaHelada = function (caja, opciones) {
     const objetivo = acierta ? pecho : pecho.clone().add(new T.Vector3((Math.random() - 0.5) * 3, Math.random() * 1.6 - 0.4, (Math.random() - 0.5) * 3));
     const d = objetivo.clone().sub(o); const L = d.length(); d.normalize();
     const choque = rayoCajas(o, d, L + 20);
-    trazo(o, o.clone().addScaledVector(d, Math.min(choque, L + (acierta ? 0 : 8))), '#ff5fd2');
+    trazo(o, o.clone().addScaledVector(d, Math.min(choque, L + (acierta ? 0 : 8))), '#ff5fd2'); sonar('botDispara', dist);
     if (acierta && choque >= L - 0.1) {
-      jugador.vida -= DANO_BOT; ui.dano.style.opacity = 1; setTimeout(() => ui.dano.style.opacity = 0, 160);
+      jugador.vida -= DANO_BOT; sonar('dano'); ui.dano.style.opacity = 1; setTimeout(() => ui.dano.style.opacity = 0, 160);
       if (jugador.vida <= 0) {
         totales.muertes++; guardarTotales(); anunciar('Bot ' + b.nombre, 'Vos', true);
         terminarRonda('Te eliminaron', `Te ganó Bot ${b.nombre}. Quedaban ${bots.filter(x => x.vivo).length} bots.`);

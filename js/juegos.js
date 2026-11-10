@@ -36,6 +36,11 @@
     .j-dato small{display:block;color:${GRIS};font-size:11px}
     .j-dato b{font-size:18px;color:${TEXTO}}
     .j-dato canvas{cursor:default}
+    .j-sonido{display:flex;align-items:center;gap:10px;margin:-4px 0 12px;padding:6px 12px 6px 6px;border-radius:12px;background:rgba(214,59,176,.07);border:1px solid rgba(214,59,176,.3)}
+    .j-sonido button{width:34px;height:34px;flex:none;border-radius:50%;border:0;background:#d63bb0;color:#fff;font-size:14px;cursor:pointer;display:grid;place-items:center}
+    .j-sonido button.mudo{background:rgba(255,255,255,.12);color:${GRIS}}
+    .j-sonido input{flex:1;min-width:60px;max-width:220px;accent-color:#d63bb0}
+    .j-sonido span{color:${GRIS};font-size:12px;font-weight:600;white-space:nowrap}
   `;
   document.head.appendChild(css);
 
@@ -72,6 +77,98 @@
   }
 
   // =====================================================================
+  // SONIDO: efectos hechos con el navegador (Web Audio), sin archivos.
+  // Cada juego tiene su volumen y su botón de silencio; se guardan en este navegador.
+  // =====================================================================
+  const Sonido = (function () {
+    let ctx = null, ruidoBuf = null;
+    const salidas = {};
+    let conf = {};
+    try { conf = JSON.parse(localStorage.getItem('juegos-sonido')) || {}; } catch (e) { conf = {}; }
+    function guardar() { try { localStorage.setItem('juegos-sonido', JSON.stringify(conf)); } catch (e) {} }
+    function de(j) { if (!conf[j]) conf[j] = { vol: 0.6, mudo: false }; return conf[j]; }
+    function iniciar() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+        try { ctx = new AC(); } catch (e) { return null; }
+        ruidoBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+        const d = ruidoBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+    function salida(j) {
+      if (!salidas[j]) { salidas[j] = ctx.createGain(); salidas[j].connect(ctx.destination); }
+      const c = de(j); salidas[j].gain.value = c.mudo ? 0 : c.vol;
+      return salidas[j];
+    }
+    // Un tono que puede subir o bajar de nota (f -> f2)
+    function tono(j, f, dur, o = {}) {
+      const t = ctx.currentTime + (o.retraso || 0), osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = o.tipo || 'square'; osc.frequency.setValueAtTime(f, t);
+      if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || 0.25, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(g); g.connect(salida(j)); osc.start(t); osc.stop(t + dur + 0.02);
+    }
+    // Ruido filtrado: disparos, golpes, explosiones
+    function ruido(j, dur, o = {}) {
+      const t = ctx.currentTime + (o.retraso || 0), src = ctx.createBufferSource(), fil = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = ruidoBuf; fil.type = o.filtro || 'lowpass'; fil.frequency.setValueAtTime(o.f || 2000, t);
+      if (o.f2) fil.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+      g.gain.setValueAtTime(o.vol || 0.3, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      src.connect(fil); fil.connect(g); g.connect(salida(j)); src.start(t); src.stop(t + dur + 0.02);
+    }
+    function melodia(j, notas, paso, o) { notas.forEach((f, i) => tono(j, f, paso * 1.6, Object.assign({}, o, { retraso: i * paso }))); }
+    const SONIDOS = {
+      stack: {
+        empezar: () => melodia('stack', [392, 523], 0.08, { tipo: 'triangle', vol: 0.2 }),
+        soltar: n => { tono('stack', 220 + Math.min(n, 40) * 9, 0.09, { tipo: 'triangle', vol: 0.28 }); ruido('stack', 0.06, { f: 900, vol: 0.12 }); },
+        perfecto: racha => melodia('stack', [660, 880, 1100].map(f => f * Math.pow(1.06, Math.min(racha, 10))), 0.055, { tipo: 'sine', vol: 0.22 }),
+        caida: () => { tono('stack', 300, 0.5, { f2: 70, tipo: 'sawtooth', vol: 0.18 }); ruido('stack', 0.35, { f: 600, f2: 120, vol: 0.2, retraso: 0.15 }); }
+      },
+      snake: {
+        empezar: () => melodia('snake', [330, 440, 550], 0.07, { tipo: 'square', vol: 0.12 }),
+        girar: () => tono('snake', 520, 0.03, { tipo: 'square', vol: 0.05 }),
+        comer: n => tono('snake', 600 + Math.min(n, 30) * 12, 0.1, { f2: 1200 + Math.min(n, 30) * 20, tipo: 'square', vol: 0.15 }),
+        choque: () => { ruido('snake', 0.3, { f: 1500, f2: 100, vol: 0.3 }); melodia('snake', [330, 262, 196], 0.12, { tipo: 'square', vol: 0.12, retraso: 0.1 }); }
+      },
+      cascada: {
+        empezar: () => melodia('cascada', [523, 659, 784], 0.07, { tipo: 'triangle', vol: 0.18 }),
+        mover: () => tono('cascada', 300, 0.03, { tipo: 'square', vol: 0.05 }),
+        girar: () => tono('cascada', 500, 0.05, { f2: 700, tipo: 'square', vol: 0.07 }),
+        fijar: () => { tono('cascada', 140, 0.08, { tipo: 'triangle', vol: 0.25 }); ruido('cascada', 0.05, { f: 700, vol: 0.1 }); },
+        caer: () => { tono('cascada', 600, 0.12, { f2: 150, tipo: 'triangle', vol: 0.2 }); ruido('cascada', 0.1, { f: 900, vol: 0.18, retraso: 0.08 }); },
+        linea: n => melodia('cascada', [523, 659, 784, 1047].slice(0, n + 1 > 4 ? 4 : n + 1), 0.06, { tipo: 'square', vol: 0.14 }),
+        nivel: () => melodia('cascada', [523, 659, 784, 1047, 1319], 0.06, { tipo: 'triangle', vol: 0.18, retraso: 0.25 }),
+        fin: () => melodia('cascada', [392, 330, 262, 196], 0.15, { tipo: 'triangle', vol: 0.2 })
+      },
+      arena: {
+        empezar: () => melodia('arena', [440, 554, 659, 880], 0.08, { tipo: 'sawtooth', vol: 0.09 }),
+        disparo: () => { tono('arena', 1400, 0.09, { f2: 300, tipo: 'sawtooth', vol: 0.09 }); ruido('arena', 0.08, { f: 4000, f2: 800, filtro: 'bandpass', vol: 0.25 }); },
+        acierto: () => tono('arena', 1800, 0.05, { tipo: 'sine', vol: 0.18, retraso: 0.02 }),
+        baja: () => { ruido('arena', 0.45, { f: 1200, f2: 80, vol: 0.35 }); tono('arena', 400, 0.4, { f2: 60, tipo: 'sawtooth', vol: 0.12 }); },
+        botDispara: dist => { const v = Math.max(0.03, 0.16 - dist * 0.004); tono('arena', 900, 0.1, { f2: 220, tipo: 'square', vol: v * 0.5 }); ruido('arena', 0.07, { f: 2500, f2: 600, filtro: 'bandpass', vol: v }); },
+        dano: () => { ruido('arena', 0.15, { f: 500, vol: 0.35 }); tono('arena', 160, 0.15, { f2: 90, tipo: 'sine', vol: 0.3 }); },
+        sinEnergia: () => tono('arena', 200, 0.05, { tipo: 'square', vol: 0.06 }),
+        ganar: () => melodia('arena', [523, 659, 784, 1047, 1319], 0.09, { tipo: 'triangle', vol: 0.2 }),
+        perder: () => melodia('arena', [392, 311, 262, 196], 0.18, { tipo: 'sawtooth', vol: 0.1 })
+      }
+    };
+    return {
+      sonar(j, nombre, arg) {
+        const c = de(j); if (c.mudo || c.vol <= 0) return;
+        if (!iniciar()) return;
+        try { SONIDOS[j][nombre](arg); } catch (e) {}
+      },
+      despertar() { iniciar(); },
+      ajustes: de,
+      poner(j, cambios) { Object.assign(de(j), cambios); guardar(); if (ctx && salidas[j]) salida(j); }
+    };
+  })();
+  window.SonidoJuegos = Sonido;
+  const sonar = Sonido.sonar;
+
+  // =====================================================================
   // STACK: apilar bloques
   // =====================================================================
   function crearStack(caja) {
@@ -104,19 +201,19 @@
       const prev = bloques[bloques.length - 1], a0 = eje + '0', a1 = eje + '1';
       const delta = mov[a0] - prev[a0];
       if (Math.abs(delta) < 0.35) {
-        mov[a0] = prev[a0]; mov[a1] = prev[a1]; perfecto = 1; racha++;
+        mov[a0] = prev[a0]; mov[a1] = prev[a1]; perfecto = 1; racha++; sonar('stack', 'perfecto', racha);
       } else {
         const o0 = Math.max(mov[a0], prev[a0]), o1 = Math.min(mov[a1], prev[a1]);
-        if (o1 <= o0) { terminar(); return; }
+        if (o1 <= o0) { sonar('stack', 'caida'); terminar(); return; }
         const resto = Object.assign({}, mov);
         if (mov[a0] < prev[a0]) { resto[a1] = o0; } else { resto[a0] = o1; }
         restos.push({ b: resto, vy: 0 });
-        mov[a0] = o0; mov[a1] = o1; racha = 0;
+        mov[a0] = o0; mov[a1] = o1; racha = 0; sonar('stack', 'soltar', puntos);
       }
       bloques.push(mov); puntos++; nuevo();
     }
     function accion() {
-      if (estado !== 'jugando') { reiniciar(); estado = 'jugando'; return; }
+      if (estado !== 'jugando') { reiniciar(); estado = 'jugando'; sonar('stack', 'empezar'); return; }
       soltar();
     }
     cv.addEventListener('pointerdown', e => { e.preventDefault(); accion(); });
@@ -202,12 +299,12 @@
       puntos = 0; paso = 140; acc = 0; elP.textContent = 0; nuevaComida();
     }
     reiniciar();
-    function empezar() { if (estado !== 'jugando') { reiniciar(); estado = 'jugando'; } }
+    function empezar() { if (estado !== 'jugando') { reiniciar(); estado = 'jugando'; sonar('snake', 'empezar'); } }
     function girar(dx, dy) {
       empezar();
       const ult = cola.length ? cola[cola.length - 1] : dir;
       if ((dx === -ult.x && dy === -ult.y) || (dx === ult.x && dy === ult.y)) return;
-      if (cola.length < 3) cola.push({ x: dx, y: dy });
+      if (cola.length < 3) { cola.push({ x: dx, y: dy }); sonar('snake', 'girar'); }
     }
     function mover() {
       if (cola.length) dir = cola.shift();
@@ -216,12 +313,12 @@
       const choca = cab.x < 0 || cab.y < 0 || cab.x >= N || cab.y >= N ||
         cuerpo.some((c, i) => (come || i < cuerpo.length - 1) && c.x === cab.x && c.y === cab.y);
       if (choca) {
-        estado = 'fin';
+        estado = 'fin'; sonar('snake', 'choque');
         if (puntos > record) { record = puntos; guardarRecord('snake', record); elR.textContent = record; }
         return;
       }
       cuerpo.unshift(cab);
-      if (come) { puntos++; elP.textContent = puntos; paso = Math.max(65, paso - 3); nuevaComida(); }
+      if (come) { puntos++; elP.textContent = puntos; sonar('snake', 'comer', puntos); paso = Math.max(65, paso - 3); nuevaComida(); }
       else cuerpo.pop();
     }
     // Deslizar el dedo (o arrastrar el mouse) sobre el tablero
@@ -341,7 +438,7 @@
     function actualizarDatos() { el.p.textContent = puntos.toLocaleString('es-AR'); el.l.textContent = lineas; el.n.textContent = nivel; el.r.textContent = record.toLocaleString('es-AR'); }
     function caida() { return Math.max(0.08, 0.8 - (nivel - 1) * 0.07); }
     function terminar() {
-      estado = 'fin';
+      estado = 'fin'; sonar('cascada', 'fin');
       if (puntos > record) { record = puntos; guardarRecord('cascada', record); }
       actualizarDatos();
     }
@@ -350,7 +447,7 @@
       pieza.m.forEach((f, j) => f.forEach((v, i) => { if (v) { if (pieza.y + j < 0) afuera = true; else grilla[pieza.y + j][pieza.x + i] = COLORES[pieza.t]; } }));
       if (afuera) { terminar(); return; }
       const llenas = []; grilla.forEach((f, j) => { if (f.every(Boolean)) llenas.push(j); });
-      if (llenas.length) { borrando = { filas: llenas, t: 0.18 }; pieza = null; return; }
+      if (llenas.length) { borrando = { filas: llenas, t: 0.18 }; pieza = null; sonar('cascada', 'linea', llenas.length); return; }
       siguiente();
     }
     function siguiente() {
@@ -361,26 +458,28 @@
       const n = borrando.filas.length;
       grilla = grilla.filter((f, j) => !borrando.filas.includes(j));
       while (grilla.length < FILAS) grilla.unshift(Array(COLS).fill(null));
+      const nivelAntes = nivel;
       lineas += n; puntos += [0, 100, 300, 500, 800][n] * nivel; nivel = 1 + Math.floor(lineas / 10);
+      if (nivel > nivelAntes) sonar('cascada', 'nivel');
       borrando = null; actualizarDatos(); siguiente();
     }
-    function empezar() { if (estado !== 'jugando') { reiniciar(); estado = 'jugando'; return true; } return false; }
-    function mover(dx) { if (estado !== 'jugando' || !pieza) return; if (valida(pieza.m, pieza.x + dx, pieza.y)) pieza.x += dx; }
+    function empezar() { if (estado !== 'jugando') { reiniciar(); estado = 'jugando'; sonar('cascada', 'empezar'); return true; } return false; }
+    function mover(dx) { if (estado !== 'jugando' || !pieza) return; if (valida(pieza.m, pieza.x + dx, pieza.y)) { pieza.x += dx; sonar('cascada', 'mover'); } }
     function girar() {
       if (empezar() || !pieza) return;
       const r = pieza.m[0].map((_, i) => pieza.m.map(f => f[i]).reverse());
-      for (const k of [0, -1, 1, -2, 2]) if (valida(r, pieza.x + k, pieza.y)) { pieza.m = r; pieza.x += k; return; }
+      for (const k of [0, -1, 1, -2, 2]) if (valida(r, pieza.x + k, pieza.y)) { pieza.m = r; pieza.x += k; sonar('cascada', 'girar'); return; }
     }
     function bajar(manual) {
       if (estado !== 'jugando' || !pieza) return;
       if (valida(pieza.m, pieza.x, pieza.y + 1)) { pieza.y++; if (manual) { puntos += 1; actualizarDatos(); } }
-      else fijar();
+      else { sonar('cascada', 'fijar'); fijar(); }
       acc = 0;
     }
     function caerDeUna() {
       if (empezar() || !pieza) return;
       let n = 0; while (valida(pieza.m, pieza.x, pieza.y + 1)) { pieza.y++; n++; }
-      puntos += n * 2; actualizarDatos(); fijar(); acc = 0;
+      puntos += n * 2; actualizarDatos(); sonar('cascada', 'caer'); fijar(); acc = 0;
     }
 
     // Toques sobre el tablero: tocar gira, arrastrar mueve, deslizar rápido hacia abajo la suelta
@@ -490,17 +589,38 @@
   // =====================================================================
   app.innerHTML =
     '<div class="j-tabs"><button data-j="stack" class="on">Stack</button><button data-j="snake">Snake</button><button data-j="cascada">Cascada</button><button data-j="arena">Arena</button></div>' +
+    '<div class="j-sonido"><button type="button" class="j-mudo" aria-label="Silenciar"><i class="fas fa-volume-high"></i></button><input type="range" class="j-vol" min="0" max="100" aria-label="Volumen del juego"><span class="j-snom">Sonido de Stack</span></div>' +
     '<div class="j-caja" data-j="stack"></div><div class="j-caja" data-j="snake" hidden></div><div class="j-caja" data-j="cascada" hidden></div><div class="j-caja" data-j="arena" hidden></div>';
   const cajas = {}; app.querySelectorAll('.j-caja').forEach(c => cajas[c.dataset.j] = c);
   const juegos = { stack: crearStack(cajas.stack), snake: crearSnake(cajas.snake), cascada: crearCascada(cajas.cascada), arena: crearArena(cajas.arena) };
   let actual = 'stack';
   juegos.stack.medir();
 
+  // Barra de sonido: muestra el volumen del juego que está abierto
+  const NOMBRES_J = { stack: 'Stack', snake: 'Snake', cascada: 'Cascada', arena: 'Arena' };
+  const sBtn = app.querySelector('.j-mudo'), sVol = app.querySelector('.j-vol'), sNom = app.querySelector('.j-snom');
+  function mostrarSonido() {
+    const c = Sonido.ajustes(actual), apagado = c.mudo || c.vol <= 0;
+    sVol.value = Math.round(c.vol * 100); sNom.textContent = 'Sonido de ' + NOMBRES_J[actual];
+    sBtn.classList.toggle('mudo', apagado);
+    sBtn.querySelector('i').className = 'fas ' + (apagado ? 'fa-volume-xmark' : c.vol < 0.4 ? 'fa-volume-low' : 'fa-volume-high');
+    sBtn.setAttribute('aria-label', apagado ? 'Activar sonido' : 'Silenciar');
+  }
+  sBtn.addEventListener('click', () => {
+    const c = Sonido.ajustes(actual);
+    if (c.mudo || c.vol <= 0) Sonido.poner(actual, { mudo: false, vol: c.vol > 0 ? c.vol : 0.6 }); else Sonido.poner(actual, { mudo: true });
+    mostrarSonido(); sBtn.blur(); Sonido.sonar(actual, 'empezar');
+  });
+  sVol.addEventListener('input', () => { Sonido.poner(actual, { vol: sVol.value / 100, mudo: false }); mostrarSonido(); });
+  sVol.addEventListener('change', () => { Sonido.sonar(actual, actual === 'arena' ? 'acierto' : actual === 'snake' ? 'comer' : actual === 'cascada' ? 'fijar' : 'soltar', 0); sVol.blur(); });
+  app.addEventListener('pointerdown', () => Sonido.despertar());
+  mostrarSonido();
+
   app.querySelectorAll('.j-tabs button').forEach(b => b.addEventListener('click', () => {
     app.querySelectorAll('.j-tabs button').forEach(o => o.classList.toggle('on', o === b));
     Object.keys(cajas).forEach(k => cajas[k].hidden = k !== b.dataset.j);
     if (actual === 'arena' && b.dataset.j !== 'arena') juegos.arena.salir();
-    actual = b.dataset.j;
+    actual = b.dataset.j; mostrarSonido();
     const vj = app.closest('.vj'); if (vj) vj.classList.toggle('ancha', actual === 'arena');
     juegos[actual].medir();
   }));
@@ -510,6 +630,7 @@
   document.addEventListener('pointerdown', e => { activo = app.contains(e.target); }, true);
   document.addEventListener('keydown', e => {
     if (!activo || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target && e.target.closest && e.target.closest('.j-sonido')) return; // las flechas mueven la barra de volumen, no el juego
     if (juegos[actual].tecla(e.code)) e.preventDefault();
   });
 
