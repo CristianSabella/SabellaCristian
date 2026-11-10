@@ -163,13 +163,15 @@
   footer { text-align: center; padding: 40px 20px; margin-top: 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
 
   /* FLOATING */
-  #whatsapp-btn { position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; background: #25D366; border-radius: 50%; display: grid; place-items: center; z-index: 1000; animation: wpulse 2s infinite; transition: transform .2s; }
+  #whatsapp-btn { position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; background: #25D366; border-radius: 50%; display: grid; place-items: center; z-index: 1000; transition: transform .2s; }
   #whatsapp-btn:hover { transform: scale(1.08); }
   #whatsapp-btn i { color: #fff; font-size: 32px; }
-  @keyframes wpulse { 0% { box-shadow: 0 0 0 0 rgba(37,211,102,.8); } 70% { box-shadow: 0 0 0 16px rgba(37,211,102,0); } 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0); } }
-  #audio-box { position: fixed; bottom: 24px; left: 24px; z-index: 1000; display: flex; align-items: center; gap: 10px; background: rgba(2,7,18,.85); border: 1px solid var(--line); border-radius: 30px; padding: 6px 14px 6px 6px; }
-  #audio-control { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--blue-soft); color: var(--blue); cursor: pointer; }
-  #audio-volume { width: 80px; accent-color: var(--blue); }
+  #audio-box { position: fixed; bottom: 24px; left: 24px; z-index: 1000; display: flex; align-items: center; gap: 10px; background: rgba(2,7,18,.85); border: 1px solid rgba(214,59,176,.45); border-radius: 30px; padding: 6px 14px 6px 6px; }
+  #audio-control { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--pink); color: #fff; cursor: pointer; }
+  #audio-volume { width: 80px; accent-color: var(--pink); }
+  /* Titileo de los botones flotantes: titila uno al azar por vez (lo maneja el script de abajo) */
+  .titila::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; animation: titileo 1.2s ease-out; }
+  @keyframes titileo { 0% { box-shadow: 0 0 0 0 var(--pulso, rgba(214,59,176,.85)); } 100% { box-shadow: 0 0 0 16px rgba(0,0,0,0); } }
 
   /* REVEAL */
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s, transform .7s; }
@@ -499,8 +501,8 @@
 
 <footer>© <span id="year"></span> Cristian Sabella · Hecho con HTML, CSS y JavaScript</footer>
 
-<!-- Música (no arranca sola: solo con el botón) -->
-<audio id="bg-music" src="https://cristiansabella.github.io/SabellaCristian/NEFFEX_Myself.mp3" loop preload="none"></audio>
+<!-- Música: intenta arrancar sola al cargar; si el navegador no deja, arranca con el primer clic, toque o tecla -->
+<audio id="bg-music" src="NEFFEX_Myself.mp3" loop preload="auto"></audio>
 <div id="audio-box">
   <button id="audio-control" onclick="toggleAudio()" aria-label="Música"><i id="audio-icon" class="fas fa-music"></i></button>
   <input type="range" id="audio-volume" min="0" max="100" value="40" aria-label="Volumen">
@@ -576,12 +578,82 @@
     audio.volume = this.value / 100;
     if (audio.paused && !userPaused) playAudio();
   });
-  // Como antes: arranca sola con el primer clic en la página (los navegadores no dejan que suene sin un clic)
-  document.addEventListener('click', function first(e) {
-    if (e.target.closest('#audio-box')) return;
+  // Intenta arrancar sola apenas carga (algunos navegadores lo permiten, sobre todo si ya visitaste la web)
+  playAudio();
+  // Si el navegador la bloqueó, arranca con el primer clic, toque o tecla en cualquier parte
+  const gestos = ['pointerdown', 'keydown', 'touchend'];
+  function primerGesto(e) {
+    if (e.target.closest && e.target.closest('#audio-box')) return;
     if (audio.paused && !userPaused) playAudio();
-    document.removeEventListener('click', first);
-  });
+    gestos.forEach(ev => document.removeEventListener(ev, primerGesto));
+  }
+  gestos.forEach(ev => document.addEventListener(ev, primerGesto));
+
+  // Titileo de los botones flotantes: cada 2 segundos titila uno al azar (nunca el mismo dos veces seguidas)
+  (function () {
+    const botones = [
+      { el: () => document.getElementById('audio-control'), color: 'rgba(214,59,176,.85)', musica: true },
+      { el: () => document.getElementById('whatsapp-btn'), color: 'rgba(37,211,102,.85)' },
+      { el: () => document.getElementById('charlie-burbuja'), color: null },
+      { el: () => document.getElementById('cig-burbuja'), color: 'rgba(201,61,90,.85)' }
+    ];
+    let ultimo = null;
+    let pausaWhatsapp = false, seFue = false, respaldo = null;
+
+    // Toma el color de Charlie desde su burbuja (se configura en su panel)
+    function colorDe(b, el) {
+      if (b.color) return b.color;
+      const c = getComputedStyle(el).backgroundColor;
+      const m = c.match(/\d+(\.\d+)?/g);
+      return m && m.length >= 3 ? `rgba(${m[0]},${m[1]},${m[2]},.85)` : 'rgba(30,111,217,.85)';
+    }
+    function apagarTodos() {
+      botones.forEach(b => { const el = b.el(); if (el) el.classList.remove('titila'); });
+    }
+    function pausado() {
+      // Un chat abierto (Charlie o Charlie Bordó) o haber ido a WhatsApp frena a todos
+      if (document.querySelector('#charlie-ventana.abierta, #cig-ventana.abierta')) return true;
+      return pausaWhatsapp || document.hidden;
+    }
+    function turno() {
+      if (pausado()) { apagarTodos(); return; }
+      const listos = botones.filter(b => {
+        const el = b.el();
+        if (!el) return false;
+        if (b.musica && userPaused) return false; // la música pausada a propósito no titila
+        return true;
+      });
+      let opciones = listos.filter(b => b !== ultimo);
+      if (!opciones.length) opciones = listos;
+      if (!opciones.length) return;
+      const b = opciones[Math.floor(Math.random() * opciones.length)];
+      const el = b.el();
+      el.style.setProperty('--pulso', colorDe(b, el));
+      el.classList.remove('titila');
+      void el.offsetWidth; // reinicia la animación
+      el.classList.add('titila');
+      ultimo = b;
+    }
+    document.addEventListener('animationend', e => {
+      if (e.animationName === 'titileo') e.target.classList.remove('titila');
+    });
+
+    // WhatsApp: al tocarlo frenan todos hasta que la persona vuelve a la web
+    document.getElementById('whatsapp-btn').addEventListener('click', () => {
+      pausaWhatsapp = true; seFue = false; apagarTodos();
+      clearTimeout(respaldo);
+      // Si no se abrió nada (no salió de la página), vuelve a titilar a los 4 segundos
+      respaldo = setTimeout(() => { if (!seFue) pausaWhatsapp = false; }, 4000);
+    });
+    function salio() { if (pausaWhatsapp) seFue = true; }
+    function volvio() { if (pausaWhatsapp && seFue) { pausaWhatsapp = false; seFue = false; } }
+    window.addEventListener('blur', salio);
+    window.addEventListener('focus', volvio);
+    document.addEventListener('visibilitychange', () => { document.hidden ? salio() : volvio(); });
+
+    setInterval(turno, 2000);
+    setTimeout(turno, 800);
+  })();
 
   // Filtros de proyectos
   document.querySelectorAll('.filters button').forEach(btn => {
