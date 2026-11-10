@@ -242,6 +242,23 @@
     #audio-volume { width: 70px; }
     #audio-box { padding: 6px 12px 6px 6px; gap: 8px; }
   }
+  /* Visualizador de música: 5 estilos que se mueven con la canción */
+  .visu { position: relative; margin-top: 26px; max-width: 560px; aspect-ratio: 16 / 6.4; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #050b14; box-shadow: 0 0 28px rgba(79,195,255,.1); }
+  .visu canvas { display: block; width: 100%; height: 100%; transition: opacity .35s; }
+  .visu canvas.cambia { opacity: 0; }
+  .visu-tema { position: absolute; left: 10px; bottom: 10px; display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--text); background: rgba(2,7,18,.65); border: 1px solid var(--line); border-radius: 20px; padding: 4px 11px; pointer-events: none; }
+  .visu-tema { max-width: calc(100% - 200px); }
+  .visu-tema span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .visu-tema i { width: 7px; height: 7px; border-radius: 50%; background: #8fa9c4; transition: .3s; }
+  .visu.sonando .visu-tema i { background: #3ddc84; box-shadow: 0 0 8px #3ddc84; }
+  .visu-sel { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 4px; background: rgba(2,7,18,.65); border: 1px solid var(--line); border-radius: 20px; padding: 3px; }
+  .visu-sel button { width: 24px; height: 24px; border-radius: 50%; border: 0; background: transparent; color: #8fa9c4; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; padding: 0; }
+  .visu-sel button:hover { color: #e6f4ff; }
+  .visu-sel button.on { background: linear-gradient(135deg, #4fc3ff, #d63bb0); color: #fff; }
+  .visu-sel .visu-auto { font-size: 13px; }
+  .visu-sel .visu-auto.on { background: rgba(61,220,132,.2); color: #3ddc84; }
+  @media (max-width: 900px) { .visu { margin-left: auto; margin-right: auto; } }
+  @media (max-width: 420px) { .visu { aspect-ratio: 16 / 9; } .visu-tema span { display: none; } }
 </style>
 </head>
 <body>
@@ -284,6 +301,13 @@
         <a href="https://www.linkedin.com/in/cristian-sabella-a872182b6/" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
         <a href="mailto:cristiansabella57@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
         <a href="https://wa.me/5493413124748" target="_blank" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+      </div>
+      <div class="visu" id="visu" aria-label="Visualizador de música">
+        <canvas id="visu-cv"></canvas>
+        <div class="visu-tema"><i></i><span>NEFFEX — Myself</span></div>
+        <div class="visu-sel">
+          <button data-v="sol" title="Sol de neón">A</button><button data-v="tunel" title="Túnel hipnótico">B</button><button data-v="aurora" title="Aurora">C</button><button data-v="espiral" title="Galaxia espiral">D</button><button data-v="barras" title="Ecualizador">E</button><button class="visu-auto on" title="Cambiar solo cada 25 segundos">⟳</button>
+        </div>
       </div>
     </div>
     <div class="photo-wrap">
@@ -653,7 +677,7 @@
 <footer>© <span id="year"></span> Cristian Sabella · Hecho con HTML, CSS y JavaScript</footer>
 
 <!-- Música: intenta arrancar sola al cargar; si el navegador no deja, arranca con el primer clic, toque o tecla -->
-<audio id="bg-music" src="https://cristiansabella.github.io/SabellaCristian/NEFFEX_Myself.mp3" loop preload="auto"></audio>
+<audio id="bg-music" src="NEFFEX_Myself.mp3" preload="auto"></audio>
 <div id="audio-box">
   <button id="audio-control" onclick="toggleAudio()" aria-label="Música"><i id="audio-icon" class="fas fa-music"></i></button>
   <input type="range" id="audio-volume" min="0" max="100" value="40" aria-label="Volumen">
@@ -669,6 +693,219 @@
     <p class="vj-nota">Tu récord queda solo en este navegador y se borra al cerrar la pestaña.</p>
   </div>
 </div>
+<script>
+// Visualizador de música: 5 estilos (A-E) que se mueven con la canción de fondo
+(function () {
+  const caja = document.getElementById('visu'), cv = document.getElementById('visu-cv'), audio = document.getElementById('bg-music');
+  if (!caja || !cv || !audio) return;
+  const ctx2 = cv.getContext('2d');
+  let W = 0, H = 0;
+  function limpiar() { ctx2.fillStyle = '#050b14'; ctx2.fillRect(0, 0, W, H); }
+  function medir() { const r = Math.min(window.devicePixelRatio || 1, 2); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * r; cv.height = H * r; ctx2.setTransform(r, 0, 0, r, 0, 0); limpiar(); }
+  medir(); window.addEventListener('resize', medir);
+
+  // El análisis del sonido se conecta en el primer toque/clic (los navegadores lo exigen)
+  let ac = null, an = null, datosF = null, datosW = null;
+  function conectar() {
+    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    try {
+      ac = new AC();
+      const src = ac.createMediaElementSource(audio);
+      an = ac.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.78;
+      src.connect(an); an.connect(ac.destination);
+      datosF = new Uint8Array(an.frequencyBinCount); datosW = new Uint8Array(an.fftSize);
+      if (ac.state === 'suspended') ac.resume();
+    } catch (e) { an = null; }
+  }
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, conectar, { capture: true, passive: true }));
+  audio.addEventListener('playing', () => { if (ac && ac.state === 'suspended') ac.resume(); caja.classList.add('sonando'); });
+  audio.addEventListener('pause', () => caja.classList.remove('sonando'));
+  // Cuando cambia la canción, se actualiza el nombre
+  const nombreTema = caja.querySelector('.visu-tema span');
+  audio.addEventListener('cambio-tema', e => { nombreTema.textContent = e.detail.titulo; });
+
+  // Lo que miran los visualizadores: 64 bandas (0 a 1), la onda, graves/medios/agudos y los golpes
+  const BANDAS = 64;
+  const A = { f: new Float32Array(BANDAS), w: new Float32Array(256), graves: 0, medios: 0, agudos: 0, golpe: 0, energia: 0, t: 0 };
+  let promGraves = 0.3;
+  function analizar(dt) {
+    A.t += dt;
+    if (an && !audio.paused) {
+      an.getByteFrequencyData(datosF); an.getByteTimeDomainData(datosW);
+      const n = datosF.length * 0.7;
+      for (let b = 0; b < BANDAS; b++) {
+        const i0 = Math.floor(Math.pow(n, b / BANDAS)), i1 = Math.max(i0 + 1, Math.floor(Math.pow(n, (b + 1) / BANDAS)));
+        let s = 0; for (let i = i0; i < i1; i++) s += datosF[i];
+        A.f[b] = Math.min(1, s / (i1 - i0) / 255 * (1 + b / BANDAS * 1.1));
+      }
+      for (let i = 0; i < 256; i++) A.w[i] = (datosW[i * 2] - 128) / 128;
+    } else { for (let b = 0; b < BANDAS; b++) A.f[b] *= 0.93; for (let i = 0; i < 256; i++) A.w[i] *= 0.9; }
+    const prom = (a, b) => { let s = 0; for (let i = a; i < b; i++) s += A.f[i]; return s / (b - a); };
+    A.graves = prom(0, 8); A.medios = prom(8, 32); A.agudos = prom(32, 64);
+    A.energia = A.graves * 0.5 + A.medios * 0.35 + A.agudos * 0.15;
+    if (A.graves > promGraves * 1.25 && A.graves > 0.35 && A.golpe < 0.2) A.golpe = 1;
+    A.golpe = Math.max(0, A.golpe - dt * 3.5);
+    promGraves += (A.graves - promGraves) * Math.min(1, dt * 2);
+  }
+
+  // ---------- Colores de la web: celeste -> violeta -> fucsia ----------
+  const C1 = [79, 195, 255], C2 = [139, 92, 246], C3 = [214, 59, 176];
+  function color(t, a = 1, luz = 0) {
+    t = ((t % 1) + 1) % 1; const u = t < 0.5 ? t * 2 : (t - 0.5) * 2, [p, q] = t < 0.5 ? [C1, C2] : [C2, C3];
+    const c = p.map((v, i) => Math.round(v + (q[i] - v) * u + (255 - v) * luz));
+    return `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  }
+  const ida = t => { t = ((t % 2) + 2) % 2; return t < 1 ? t : 2 - t; }; // va y vuelve (celeste->fucsia->celeste)
+
+  const VIZ = {
+    // A: Sol de neón
+    sol(x, W, H, dt, s) {
+      x.fillStyle = 'rgba(5,11,20,.22)'; x.fillRect(0, 0, W, H);
+      const cx = W / 2, cy = H / 2, R = H * 0.2 * (1 + A.graves * 0.35 + A.golpe * 0.12);
+      s.giro = (s.giro || 0) + dt * (0.25 + A.energia * 1.6);
+      x.globalCompositeOperation = 'lighter';
+      // anillos girando
+      for (let k = 0; k < 3; k++) {
+        x.beginPath(); x.lineWidth = 1.5; x.strokeStyle = color(ida(A.t * 0.1 + k * 0.33), 0.35 + A.medios * 0.4);
+        x.setLineDash([4 + k * 6, 10 + k * 4]); x.lineDashOffset = -s.giro * (40 + k * 30) * (k % 2 ? -1 : 1);
+        x.arc(cx, cy, R * (1.9 + k * 0.55) + A.golpe * 10, 0, Math.PI * 2); x.stroke();
+      }
+      x.setLineDash([]);
+      // rayos
+      const N = 96;
+      for (let i = 0; i < N; i++) {
+        const b = i < N / 2 ? i : N - 1 - i, v = A.f[Math.floor(b / (N / 2) * 44)];
+        const ang = i / N * Math.PI * 2 + s.giro, L = 6 + v * H * 0.36;
+        x.strokeStyle = color(ida(i / N * 2 + A.t * 0.15), 0.85); x.lineWidth = 2.4;
+        x.beginPath(); x.moveTo(cx + Math.cos(ang) * (R + 4), cy + Math.sin(ang) * (R + 4)); x.lineTo(cx + Math.cos(ang) * (R + 4 + L), cy + Math.sin(ang) * (R + 4 + L)); x.stroke();
+      }
+      // chispas en cada golpe
+      s.p = s.p || [];
+      if (A.golpe > 0.95) for (let i = 0; i < 26; i++) { const a = Math.random() * 7, v = 60 + Math.random() * 160; s.p.push({ x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 1, c: Math.random() }); }
+      for (let i = s.p.length - 1; i >= 0; i--) { const p = s.p[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.t -= dt * 1.2; if (p.t <= 0) { s.p.splice(i, 1); continue; } x.fillStyle = color(p.c, p.t); x.fillRect(p.x - 1.5, p.y - 1.5, 3, 3); }
+      // núcleo
+      const g = x.createRadialGradient(cx, cy, 0, cx, cy, R);
+      g.addColorStop(0, color(0.5, 0.95, 0.5)); g.addColorStop(0.6, color(ida(A.t * 0.2), 0.55)); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g; x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.fill();
+      x.globalCompositeOperation = 'source-over';
+    },
+    // B: Túnel hipnótico
+    tunel(x, W, H, dt, s) {
+      x.fillStyle = 'rgba(5,11,20,.3)'; x.fillRect(0, 0, W, H);
+      s.z = (s.z || 0) + dt * (0.35 + A.energia * 2.2 + A.golpe * 0.8);
+      s.r = (s.r || 0) + dt * (0.2 + A.medios * 1.2);
+      const cx = W / 2 + Math.sin(A.t * 0.5) * W * 0.04, cy = H / 2 + Math.cos(A.t * 0.37) * H * 0.05;
+      x.globalCompositeOperation = 'lighter';
+      const capas = 22, lados = 6;
+      for (let k = capas; k >= 0; k--) {
+        const prof = ((k - s.z * 3) % capas + capas) % capas / capas; // 0 cerca, 1 lejos
+        const esc = Math.pow(1 - prof, 2.2) * W * 0.75 + 4, v = A.f[Math.floor(prof * 40)];
+        const ang = s.r + prof * 3 * Math.sin(A.t * 0.3);
+        x.beginPath();
+        for (let i = 0; i <= lados; i++) { const a = ang + i / lados * Math.PI * 2, rr = esc * (1 + v * 0.25); i ? x.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.62) : x.moveTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.62); }
+        x.strokeStyle = color(ida(prof * 2 + A.t * 0.2), (1 - prof) * (0.5 + v * 0.6)); x.lineWidth = 1 + (1 - prof) * 3; x.stroke();
+      }
+      // luz al fondo
+      const g = x.createRadialGradient(cx, cy, 0, cx, cy, H * 0.35);
+      g.addColorStop(0, color(0.5, 0.25 + A.golpe * 0.35, 0.4)); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.globalCompositeOperation = 'source-over';
+    },
+    // C: Aurora
+    aurora(x, W, H, dt, s) {
+      x.fillStyle = 'rgba(5,11,20,.16)'; x.fillRect(0, 0, W, H);
+      x.globalCompositeOperation = 'lighter';
+      for (let k = 0; k < 5; k++) {
+        const amp = H * (0.12 + A.f[k * 6 + 2] * 0.35), base = H * (0.3 + k * 0.1);
+        x.beginPath();
+        for (let i = 0; i <= 128; i++) {
+          const px = i / 128 * W, w = A.w[(i * 2 + k * 17) % 256];
+          const py = base + Math.sin(i * 0.05 + A.t * (0.6 + k * 0.25) + k) * amp * 0.5 + w * amp;
+          i ? x.lineTo(px, py) : x.moveTo(px, py);
+        }
+        x.strokeStyle = color(ida(k * 0.25 + A.t * 0.12), 0.5 + A.energia * 0.4); x.lineWidth = 2 + A.golpe * 2;
+        x.shadowColor = color(ida(k * 0.25 + A.t * 0.12), 1); x.shadowBlur = 14; x.stroke();
+      }
+      x.shadowBlur = 0;
+      // estrellitas
+      s.e = s.e || Array.from({ length: 60 }, () => ({ x: Math.random(), y: Math.random(), f: Math.random() * 6 }));
+      s.e.forEach(e => { x.fillStyle = `rgba(230,244,255,${0.25 + 0.5 * Math.abs(Math.sin(A.t * 1.5 + e.f)) * (0.4 + A.agudos)})`; x.fillRect(e.x * W, e.y * H, 1.6, 1.6); });
+      x.globalCompositeOperation = 'source-over';
+    },
+    // D: Galaxia espiral
+    espiral(x, W, H, dt, s) {
+      x.fillStyle = 'rgba(5,11,20,.25)'; x.fillRect(0, 0, W, H);
+      s.g = (s.g || 0) + dt * (0.12 + A.energia * 0.9);
+      const cx = W / 2, cy = H / 2, N = 520, ORO = Math.PI * (3 - Math.sqrt(5));
+      x.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < N; i++) {
+        const v = A.f[Math.floor(i / N * 56)];
+        const r = Math.sqrt(i / N) * H * 0.62 * (1 + v * 0.35 + A.golpe * 0.06);
+        const a = i * ORO + s.g * (1 + i / N);
+        const px = cx + Math.cos(a) * r * 1.45, py = cy + Math.sin(a) * r;
+        const tam = 0.8 + v * 3.2;
+        x.fillStyle = color(ida(i / N * 2 - A.t * 0.15), 0.35 + v * 0.65);
+        x.beginPath(); x.arc(px, py, tam, 0, Math.PI * 2); x.fill();
+      }
+      const g = x.createRadialGradient(cx, cy, 0, cx, cy, H * 0.22);
+      g.addColorStop(0, color(0.5, 0.35 + A.golpe * 0.4, 0.5)); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.globalCompositeOperation = 'source-over';
+    },
+    // E: Ecualizador clásico
+    barras(x, W, H, dt, s) {
+      x.clearRect(0, 0, W, H);
+      const N = 40, gap = 3, bw = (W - 24 - gap * (N - 1)) / N, piso = H * 0.74;
+      s.pico = s.pico || new Float32Array(N);
+      for (let i = 0; i < N; i++) {
+        const v = A.f[Math.floor(i / N * 50)], h = 4 + v * piso * 0.92, px = 12 + i * (bw + gap);
+        if (v > s.pico[i]) s.pico[i] = v; else s.pico[i] = Math.max(0, s.pico[i] - dt * 0.45);
+        const g = x.createLinearGradient(0, piso - h, 0, piso);
+        g.addColorStop(0, color(0.98, 1)); g.addColorStop(0.5, color(0.5, 1)); g.addColorStop(1, color(0, 1));
+        x.shadowColor = color(i / N, 0.9); x.shadowBlur = 10 + A.golpe * 10;
+        x.fillStyle = g; x.fillRect(px, piso - h, bw, h);
+        x.shadowBlur = 0;
+        x.fillStyle = '#e6f4ff'; x.fillRect(px, piso - 4 - s.pico[i] * piso * 0.92 - 4, bw, 2.5); // pico que cae
+        // reflejo
+        const r = x.createLinearGradient(0, piso, 0, piso + h * 0.4);
+        r.addColorStop(0, color(0, 0.35)); r.addColorStop(1, 'rgba(0,0,0,0)');
+        x.fillStyle = r; x.fillRect(px, piso + 2, bw, h * 0.4);
+      }
+    }
+  };
+
+
+  // ---------- Elegir estilo (A-E) y cambio automático ----------
+  const ORDEN = ['sol', 'tunel', 'aurora', 'espiral', 'barras'];
+  let actual = 'aurora', estado = {}, auto = true, ultimoCambio = 0;
+  const botones = caja.querySelectorAll('.visu-sel [data-v]'), btnAuto = caja.querySelector('.visu-auto');
+  function elegir(v) {
+    if (v === actual) return;
+    cv.classList.add('cambia');
+    setTimeout(() => { actual = v; estado = {}; limpiar(); cv.classList.remove('cambia'); }, 350);
+    botones.forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    ultimoCambio = A.t;
+  }
+  botones.forEach(b => { b.classList.toggle('on', b.dataset.v === actual); b.addEventListener('click', () => elegir(b.dataset.v)); });
+  btnAuto.addEventListener('click', () => { auto = !auto; btnAuto.classList.toggle('on', auto); ultimoCambio = A.t; });
+
+  // Solo se dibuja si se ve en pantalla y no hay un juego abierto
+  let visible = true;
+  if ('IntersectionObserver' in window) new IntersectionObserver(e => { visible = e[0].isIntersecting; }).observe(caja);
+  let antes = performance.now();
+  function bucle(ahora) {
+    const dt = Math.min(0.05, (ahora - antes) / 1000); antes = ahora;
+    if (visible && !document.body.classList.contains('juego-abierto')) {
+      analizar(dt);
+      VIZ[actual](ctx2, W, H, dt, estado);
+      if (auto && A.t - ultimoCambio > 25) elegir(ORDEN[(ORDEN.indexOf(actual) + 1) % ORDEN.length]);
+    }
+    requestAnimationFrame(bucle);
+  }
+  requestAnimationFrame(bucle);
+})();
+</script>
 <script src="js/juegos.js" defer></script>
 
 <!-- Charlie: chatbot (Cloudflare Workers). Va arriba del botón de WhatsApp -->
@@ -728,6 +965,19 @@
   const volume = document.getElementById('audio-volume');
   audio.volume = 0.4;
   let userPaused = false;
+  // Lista de canciones: cuando termina una arranca la siguiente, y después de la última vuelve a la primera
+  const LISTA = [
+    { src: 'NEFFEX_Myself.mp3', titulo: 'NEFFEX — Myself' },
+    { src: 'NEFFEX_Tell_Me_That_I_Cant.mp3', titulo: "NEFFEX — Tell Me That I Can't" },
+    { src: 'NEFFEX_Hows_It_Supposed_To_Feel.mp3', titulo: "NEFFEX — How's It Supposed To Feel" }
+  ];
+  let tema = 0;
+  audio.addEventListener('ended', () => {
+    tema = (tema + 1) % LISTA.length;
+    audio.src = LISTA[tema].src;
+    audio.dispatchEvent(new CustomEvent('cambio-tema', { detail: LISTA[tema] }));
+    playAudio();
+  });
   function playAudio() {
     try {
       const p = audio.play();
