@@ -205,6 +205,9 @@
   @keyframes brillo-juego { 0% { box-shadow: 0 0 0 0 rgba(214,59,176,1), 0 0 14px rgba(214,59,176,.6); } 60% { box-shadow: 0 0 0 14px rgba(214,59,176,.25), 0 0 14px rgba(214,59,176,.6); } 61%, 100% { box-shadow: 0 0 0 0 rgba(214,59,176,0), 0 0 14px rgba(214,59,176,.6); } }
   .nav-links a[data-jugar] { color: #fff; background: linear-gradient(135deg, var(--blue), var(--pink)); }
   a.cv-brilla { background: linear-gradient(135deg, var(--blue), var(--pink)); color: #fff; border-color: transparent; animation: arcoiris 3.6s steps(12) infinite, brillo-juego .9s ease-out infinite; }
+  .nav-links a.nav-contacto { background: #25D366; color: #fff; animation: brillo-verde .9s ease-out infinite; }
+  .nav-links a.nav-contacto:hover { background: #2fe476; }
+  @keyframes brillo-verde { 0% { box-shadow: 0 0 0 0 rgba(37,211,102,1), 0 0 14px rgba(37,211,102,.6); } 60% { box-shadow: 0 0 0 14px rgba(37,211,102,.25), 0 0 14px rgba(37,211,102,.6); } 61%, 100% { box-shadow: 0 0 0 0 rgba(37,211,102,0), 0 0 14px rgba(37,211,102,.6); } }
   @keyframes arcoiris { from { filter: hue-rotate(0deg) saturate(1.3); } to { filter: hue-rotate(360deg) saturate(1.3); } }
   body.juego-abierto #whatsapp-btn, body.juego-abierto #audio-box, body.juego-abierto #charlie-burbuja, body.juego-abierto #cig-burbuja { opacity: 0; pointer-events: none; }
 
@@ -253,7 +256,7 @@
       <a href="#proyectos">Proyectos</a>
       <a href="#formacion">Formación</a>
       <a href="#" data-jugar="stack">Juegos</a>
-      <a href="#contacto">Contacto</a>
+      <a href="#contacto" class="nav-contacto">Contacto</a>
       <a href="https://drive.google.com/file/d/1kAd10JPPZiVyh9mzKwvqv58Tc8rIU21X/view?usp=drive_link" target="_blank" class="btn cv-brilla"><i class="fas fa-file-arrow-down"></i> CV</a>
     </div>
   </div>
