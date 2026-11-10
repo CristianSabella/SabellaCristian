@@ -3,7 +3,7 @@
 //   <script src="https://TU-SERVIDOR/widget.js"></script>
 //
 // Opciones (atributos del <script>, todos opcionales):
-//   data-servidor="https://charlie-bot.TU-USUARIO.workers.dev"  -> si el widget.js está alojado en otro lado
+//   data-servidor="https://jarvis.TU-USUARIO.workers.dev"  -> si el widget.js está alojado en otro lado
 //   data-abajo="96"     -> distancia al borde de abajo, en px (default 20)
 //   data-derecha="24"   -> distancia al borde derecho, en px (default 20)
 //
