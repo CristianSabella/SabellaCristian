@@ -304,7 +304,7 @@
       </div>
       <div class="visu" id="visu" aria-label="Visualizador de música">
         <canvas id="visu-cv"></canvas>
-        <div class="visu-tema"><i></i><span>Chopin — Preludio en Mi menor, Op. 28 n.º 4</span></div>
+        <div class="visu-tema"><i></i><span>Piano clásico — Chopin, Beethoven, Debussy</span></div>
         <div class="visu-sel">
           <button data-v="sol" title="Sol de neón">A</button><button data-v="tunel" title="Túnel hipnótico">B</button><button data-v="aurora" title="Aurora">C</button><button data-v="espiral" title="Galaxia espiral">D</button><button data-v="barras" title="Ecualizador">E</button><button class="visu-auto on" title="Cambiar solo cada 25 segundos">⟳</button>
         </div>
@@ -693,7 +693,7 @@
 <footer>© <span id="year"></span> Cristian Sabella · Hecho con HTML, CSS y JavaScript</footer>
 
 <!-- Música: intenta arrancar sola al cargar; si el navegador no deja, arranca con el primer clic, toque o tecla -->
-<audio id="bg-music" src="Chopin_Prelude_E_Minor.mp3" preload="auto"></audio>
+<audio id="bg-music" src="Piano_Clasico.mp3" preload="auto"></audio>
 <div id="audio-box">
   <button id="audio-control" onclick="toggleAudio()" aria-label="Música"><i id="audio-icon" class="fas fa-music"></i></button>
   <input type="range" id="audio-volume" min="0" max="100" value="40" aria-label="Volumen">
@@ -1030,7 +1030,7 @@
   let userPaused = false;
   // Lista de canciones: cuando termina una arranca la siguiente, y después de la última vuelve a la primera
   const LISTA = [
-    { src: 'Chopin_Prelude_E_Minor.mp3', titulo: 'Chopin — Preludio en Mi menor, Op. 28 n.º 4' }
+    { src: 'Piano_Clasico.mp3', titulo: 'Piano clásico — Chopin, Beethoven, Debussy' }
   ];
   let tema = 0;
   audio.addEventListener('ended', () => {
