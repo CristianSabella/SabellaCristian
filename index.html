@@ -338,11 +338,11 @@
     <div class="stack-box reveal"><h3><i class="fas fa-code"></i> Lenguajes</h3>
       <div class="chips"><span class="chip">C#</span><span class="chip">Java</span><span class="chip">JavaScript</span><span class="chip">Dart</span><span class="chip">Python</span><span class="chip">Lua</span><span class="chip">Visual Basic 6</span><span class="chip">HTML</span><span class="chip">CSS</span><span class="chip">SQL / T-SQL</span></div></div>
     <div class="stack-box reveal"><h3><i class="fas fa-layer-group"></i> Frameworks</h3>
-      <div class="chips"><span class="chip">.NET / ASP.NET Core</span><span class="chip">Entity Framework Core</span><span class="chip">Windows Forms</span><span class="chip">Flutter</span><span class="chip">React Native / Expo</span><span class="chip">Node.js / Express</span><span class="chip">MonoGame</span><span class="chip">GeneXus</span></div></div>
+      <div class="chips"><span class="chip">.NET / ASP.NET Core</span><span class="chip">Entity Framework Core</span><span class="chip">Windows Forms</span><span class="chip">Flutter</span><span class="chip">React Native / Expo</span><span class="chip">Node.js / Express</span><span class="chip">MonoGame</span><span class="chip">GeneXus</span><span class="chip">Three.js</span><span class="chip">Electron</span></div></div>
     <div class="stack-box reveal"><h3><i class="fas fa-database"></i> Bases de datos</h3>
-      <div class="chips"><span class="chip">SQL Server</span><span class="chip">PostgreSQL</span><span class="chip">Modelado relacional</span><span class="chip">Stored Procedures</span><span class="chip">Triggers</span><span class="chip">Vistas</span><span class="chip">Índices</span><span class="chip">Migraciones</span></div></div>
+      <div class="chips"><span class="chip">SQL Server</span><span class="chip">PostgreSQL</span><span class="chip">SQLite</span><span class="chip">Modelado relacional</span><span class="chip">Stored Procedures</span><span class="chip">Triggers</span><span class="chip">Vistas</span><span class="chip">Índices</span><span class="chip">Migraciones</span></div></div>
     <div class="stack-box reveal"><h3><i class="fas fa-tools"></i> Herramientas y prácticas</h3>
-      <div class="chips"><span class="chip">Git / GitHub</span><span class="chip">GitHub Pages</span><span class="chip">Docker</span><span class="chip">Railway</span><span class="chip">API REST</span><span class="chip">Autenticación / BCrypt</span><span class="chip">Sockets TCP</span><span class="chip">Visual Studio</span><span class="chip">VS Code</span><span class="chip">Testing</span><span class="chip">Seguridad</span><span class="chip">Agile</span></div></div>
+      <div class="chips"><span class="chip">Git / GitHub</span><span class="chip">GitHub Pages</span><span class="chip">Docker</span><span class="chip">Railway</span><span class="chip">Cloudflare Workers</span><span class="chip">IA: Gemini / Claude API</span><span class="chip">Roblox Studio</span><span class="chip">API REST</span><span class="chip">Autenticación / BCrypt</span><span class="chip">Sockets TCP</span><span class="chip">Visual Studio</span><span class="chip">VS Code</span><span class="chip">Testing</span><span class="chip">Seguridad</span><span class="chip">Agile</span></div></div>
   </div>
 </section>
 
@@ -972,16 +972,34 @@
     'Flutter': 'flutter/flutter-original', 'React Native / Expo': 'react/react-original', 'Node.js / Express': 'nodejs/nodejs-original',
     'SQL Server': 'microsoftsqlserver/microsoftsqlserver-original', 'PostgreSQL': 'postgresql/postgresql-original',
     'Git / GitHub': 'git/git-original', 'GitHub Pages': 'github/github-original', 'Docker': 'docker/docker-original',
-    'Railway': 'railway/railway-original', 'Visual Studio': 'visualstudio/visualstudio-original', 'VS Code': 'vscode/vscode-original'
+    'Railway': 'railway/railway-original', 'Visual Studio': 'visualstudio/visualstudio-original', 'VS Code': 'vscode/vscode-original',
+    'Three.js': 'threejs/threejs-original', 'Electron': 'electron/electron-original', 'SQLite': 'sqlite/sqlite-original',
+    'Cloudflare Workers': 'cloudflareworkers/cloudflareworkers-original'
+  };
+  // Conceptos sin logo oficial: ícono de Font Awesome
+  const iconos = {
+    'MonoGame': 'fa-gamepad', 'GeneXus': 'fa-cubes', 'Modelado relacional': 'fa-diagram-project',
+    'Stored Procedures': 'fa-gears', 'Triggers': 'fa-bolt', 'Vistas': 'fa-eye', 'Índices': 'fa-list-ol',
+    'Migraciones': 'fa-right-left', 'API REST': 'fa-plug', 'Autenticación / BCrypt': 'fa-lock',
+    'Sockets TCP': 'fa-network-wired', 'Testing': 'fa-vial', 'Seguridad': 'fa-shield-halved', 'Agile': 'fa-arrows-rotate',
+    'IA: Gemini / Claude API': 'fa-robot', 'Roblox Studio': 'fa-cube'
   };
   document.querySelectorAll('.stack .chip').forEach(chip => {
     const key = chip.textContent.trim();
+    if (iconos[key]) {
+      const i = document.createElement('i');
+      i.className = 'fas ' + iconos[key];
+      i.style.cssText = 'color:#60a5fa;width:18px;text-align:center';
+      chip.classList.add('has-logo');
+      chip.prepend(i);
+      return;
+    }
     if (!logos[key]) return;
     const img = document.createElement('img');
     img.src = base + logos[key] + '.svg';
     img.alt = '';
     img.onerror = () => { img.remove(); chip.classList.remove('has-logo'); };
-    if (key === 'GitHub Pages' || key === 'Railway') img.style.filter = 'invert(1)';
+    if (key === 'GitHub Pages' || key === 'Railway' || key === 'Three.js') img.style.filter = 'invert(1)';
     chip.classList.add('has-logo');
     chip.prepend(img);
   });
